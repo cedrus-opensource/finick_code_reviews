@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+from finicky.basics import prelaunch_checklist_close
+
+import os
+
+
 """
 there is a possibility that the resulting 'forefront' will not be a commit that
 produces a working build (on all platforms) when checked out.
@@ -8,10 +13,8 @@ In that case the tagged zero-forefront should not advance.
 """
 
 def finish_session():
-    # config integrity check. (older than the open-session commit)
-    # are we on the right branch?
-    # is a session in progress?
-    # does a git whoami succeed?
+
+    prelaunch_checklist_close( os.path.basename(__file__) )
 
     # reviews file integrity check.
     # reviews file should now be properly upgraded already.
@@ -31,3 +34,4 @@ def finish_session():
     # send email (email to remind todo items. todo items past certain date?)
 
 
+finish_session()

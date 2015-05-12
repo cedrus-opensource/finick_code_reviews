@@ -1,6 +1,9 @@
 
 
 
+
+import finicky.parse_config
+
 def prelaunch_checklist_open( calling_filename ):
     _prelaunch_checklist( calling_filename, False )
 
@@ -16,4 +19,5 @@ def _prelaunch_checklist( calling_filename, please_use_db_file_datetime ):
 
     print "prelaunch_checklist"
     print calling_filename
+    return finicky.parse_config.FinickConfig( '' )
 

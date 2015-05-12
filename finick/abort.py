@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 
+from finicky.basics import prelaunch_checklist_close
+
+import os
 
 
 def abort_session():
-    # config integrity check. (older than the open-session commit)
-    # are we on the right branch?
+
+    prelaunch_checklist_close( os.path.basename(__file__) )
+
     # is a session in progress?
-    # does a git whoami succeed?
 
     # reviews file integrity check.
     # reviews file should now be properly upgraded already.
@@ -15,3 +18,7 @@ def abort_session():
     # assignments file should be empty
 
     # commit and push the abort message
+
+
+abort_session()
+
