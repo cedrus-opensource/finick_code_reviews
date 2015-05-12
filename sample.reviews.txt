@@ -1,0 +1,39 @@
+jdoe@cedrus.com    3656e55fd36b8b0d8586e57ea87674a0e70ad251   OK    bla@cedrus.com
+jdoe@cedrus.com    ecfb3356338c0e3b6c7381ee1091ae37aa4c8f75   OK    bla@cedrus.com
+##__forefront__## YYYY-MM-DD HH:MM:SS
+jdoe@cedrus.com    4355bfb59e9e1b13a8cee4ffd0bd7ea4e2ee226d   WAIT  nobody
+jdoe@cedrus.com    ebc8afae56a47ab37080be1e3946cf9c91226383   NOW
+jdoe@cedrus.com    2228add0186febf3471914c861b3b06fd0eb8dbc   NOW
+jdoe@cedrus.com    3656e55fd36b8b0d8586e57ea87674a0e70ad251   OK    bla@cedrus.com
+jdoe@cedrus.com    ecfb3356338c0e3b6c7381ee1091ae37aa4c8f75   OK    bla@cedrus.com
+jdoe@cedrus.com    ecfb3356338c0e3b6c7381ee1091ae37aa4c8f75   TODO  bla@cedrus.com        # need to rename 'x' to 'y'
+jdoe@cedrus.com    d414990ed72c1990fc1d609b175973742d049c6d   NOW
+jdoe@cedrus.com    0071e7bf69d63da4bdba958a95a80f430af92b48   REJ   crit@cedrus.com
+jdoe@cedrus.com    f6cc7699fb362c2777c474f3416ce0abb2c083fe   HIDE  nobody                # this is a reversal of commit xxxxxx
+jdoe@cedrus.com    7b660c3a473225f49c73e51c7b8af61e139990a0   NOW
+jdoe@cedrus.com    2228add0186febf3471914c861b3b06fd0eb8dbc   TFIX  abc@cedrus.com  ecfb335633  # good fix for todo
+
+
+OK (to accept)
+
+REJ (to reject)
+
+WAIT (needs a review)
+
+TFIX (implies both OK *and* closes a TODO)
+
+
+HIDE (this is 'null' for reviewing purposes)
+
+
+NOW (assigned)
+
+
+HIDE is for things that were reversals, and for this:
+CommitStringMaintWithoutSession=Cedrus_Automated_Maintenance_Commit
+
+
+
+
+todos:
+jdoe@cedrus.com    ecfb3356338c0e3b6c7381ee1091ae37aa4c8f75   TODO  bla@cedrus.com     # need to rename 'x' to 'y'
