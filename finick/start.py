@@ -19,7 +19,7 @@ def start_session():
 
 
     # can we pull/merge all from origin?
-    git_establish_session_readiness()
+    git_establish_session_readiness( finick_config )
 
     # reviews file integrity check.
     # upgrade file format if needed.
