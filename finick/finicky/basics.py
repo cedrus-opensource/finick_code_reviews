@@ -1,14 +1,13 @@
 
-
-
-
 import finicky.parse_config
 
+import glob
+
 def prelaunch_checklist_open( calling_filename ):
-    _prelaunch_checklist( calling_filename, False )
+    return _prelaunch_checklist( calling_filename, False )
 
 def prelaunch_checklist_close( calling_filename ):
-    _prelaunch_checklist( calling_filename, True )
+    return _prelaunch_checklist( calling_filename, True )
 
 def _prelaunch_checklist( calling_filename, please_use_db_file_datetime ):
 
@@ -17,7 +16,10 @@ def _prelaunch_checklist( calling_filename, please_use_db_file_datetime ):
     # are we on the right branch?
     # do a git-whoami and make sure we have an email
 
-    print "prelaunch_checklist"
-    print calling_filename
-    return finicky.parse_config.FinickConfig( '' )
+    all_cwd_inis = glob.glob('*ini')
+
+    if len(all_cwd_inis) != 1:
+        raise Exception("you must have exactly one (and only one) ini file in the CWD")
+
+    return finicky.parse_config.FinickConfig( all_cwd_inis[0] )
 

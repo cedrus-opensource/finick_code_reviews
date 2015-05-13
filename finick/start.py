@@ -12,7 +12,11 @@ import os
 def start_session():
 
     # need to retrieve some kind of 'config object'
-    prelaunch_checklist_open( os.path.basename(__file__) )
+    finick_config = prelaunch_checklist_open( os.path.basename(__file__) )
+
+    if False == finick_config.is_ok:
+        raise Exception("unable to parse the config/ini file")
+
 
     # can we pull/merge all from origin?
     git_establish_session_readiness()
