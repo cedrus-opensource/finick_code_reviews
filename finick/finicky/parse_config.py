@@ -1,5 +1,6 @@
 
 import ConfigParser
+from finicky.error import FinickError
 
 import os
 
@@ -7,7 +8,7 @@ def AssertType_FinickConfig( o ):
     rhs = FinickConfig.dummyinstance()
     incoming_type = str(type(o))
     if type(o) != type(rhs):
-        raise Exception("AssertType_FinickConfig failed. FinickConfig was required, but instead we got: " + incoming_type)
+        raise FinickError("AssertType_FinickConfig failed. FinickConfig was required, but instead we got: " + incoming_type)
 
 class FinickConfig(object):
 
@@ -34,7 +35,7 @@ class FinickConfig(object):
         return cls('',True)
 
     def _fail_setter(self, value):
-        raise Exception("FinickConfig objects are immutable")
+        raise FinickError("FinickConfig objects are immutable")
 
     is_ok      = property(lambda s : s.__is_ok,         _fail_setter)
 

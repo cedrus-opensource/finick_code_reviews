@@ -1,0 +1,4 @@
+
+
+
+class FinickError(Exception): pass

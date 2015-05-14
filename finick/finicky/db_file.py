@@ -1,5 +1,6 @@
 
 import finicky.gitting
+from finicky.error import FinickError
 
 import os
 
@@ -31,7 +32,7 @@ def _db_integrity_check( finick_config, session_is_closing ):
         configfile = finick_config.confdir + os.sep + finick_config.configname
         err_msg = 'Missing or unreadable DB file. (Create an empty file for first use.) '
         err_msg += 'While using config \''+ configfile +'\', you must have the DB file \''+ expected_db +'\''
-        raise Exception( err_msg )
+        raise FinickError( err_msg )
 
 
 

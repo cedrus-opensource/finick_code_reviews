@@ -1,5 +1,6 @@
 
 import finicky.parse_config
+from finicky.error import FinickError
 
 import glob
 
@@ -19,7 +20,8 @@ def _prelaunch_checklist( calling_filename, please_use_db_file_datetime ):
     all_cwd_inis = glob.glob('*ini')
 
     if len(all_cwd_inis) != 1:
-        raise Exception("you must have exactly one (and only one) ini file in the CWD")
+        # eventually we will allow the INI file to be passed as an argument
+        raise FinickError("you must have exactly one (and only one) ini file in the CWD")
 
     return finicky.parse_config.FinickConfig( all_cwd_inis[0] )
 

@@ -1,5 +1,6 @@
 
 import finicky.parse_config
+from finicky.error import FinickError
 
 import subprocess
 import datetime
@@ -31,7 +32,7 @@ def git_establish_session_readiness( finick_config ):
     results = _git_exec_and_return_stdout( 'git rev-parse --abbrev-ref HEAD', finick_config.repopath )
 
     if results.rstrip() != finick_config.branch:
-        raise Exception("Unable to start code-review session. Could not check out the required git branch.")
+        raise FinickError("Unable to start code-review session. Could not check out the required git branch.")
 
     _git_exec_and_return_stdout( 'git pull ' + _quietness + ' origin ' + finick_config.branch, finick_config.repopath )
 
@@ -90,7 +91,7 @@ def _git_exec_and_return_stdout( command_string, repo_path ):
         if git_process.returncode != 0:
             err_msg = str( 'return code ' + str(git_process.returncode) + ' calling git (' +
                            command_string + ') from path \'' + str(repo_path) + '\'' )
-            raise Exception( err_msg )
+            raise FinickError( err_msg )
 
     except:
         print today_datestr + 'python exception calling git (' + command_string + ') from path \'' + str(repo_path) + '\''
