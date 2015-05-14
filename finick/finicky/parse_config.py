@@ -24,6 +24,7 @@ class FinickConfig(object):
         self.__str_abort = ''
         self.__str_finish = ''
         self.__str_maint = ''
+        self.__verbose = -1
 
         if False == defaults_only:
             self._initialize_from_file( file_location )
@@ -57,6 +58,8 @@ class FinickConfig(object):
 
     str_maint  = property(lambda s : s.__str_maint,     _fail_setter)
 
+    verbosity  = property(lambda s : s.__verbose,       _fail_setter)
+
 
     def _initialize_from_file( self, file_location ):
 
@@ -76,6 +79,7 @@ class FinickConfig(object):
         self.__config = os.path.splitext( file_basename )[0]
         location = os.path.dirname( file_location )
         self.__cfgdir = os.path.normpath( location )
+        self.__verbose = int(cf.get('GitReviews','Verbosity'))
 
         # todo: we need to sanity check this more thoroughly before setting to true
         self.__is_ok = True

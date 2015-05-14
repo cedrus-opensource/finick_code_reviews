@@ -4,10 +4,23 @@ import finicky.parse_config
 import subprocess
 import datetime
 
-_quietness = ''
-# choose this to let git print more info to stderr:
-#_quietness = ' -q '
+_quietness = ''  # empty string means the ABSENCE of the quiet flag. absence means NO suppressed git stderr
 
+def _dec_assign_to_globals(F):
+    def wrapper(*args):
+        finick_config = args[0]
+        finicky.parse_config.AssertType_FinickConfig( finick_config )
+
+        if finick_config.verbosity >= 1:
+            finicky.gitting._quietness = ' ' # verbosity is ENABLED. we do not use the quiet flag
+        else:
+            finicky.gitting._quietness = ' -q ' # verbosity was at ZERO, so apply quietness
+
+        return F(*args)
+
+    return wrapper
+
+@_dec_assign_to_globals
 def git_establish_session_readiness( finick_config ):
 
     finicky.parse_config.AssertType_FinickConfig( finick_config )
