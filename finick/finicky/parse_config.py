@@ -14,6 +14,8 @@ class FinickConfig(object):
     def __init__(self, file_location, defaults_only = False):
         self.__is_ok = False
 
+        self.__config = ''
+        self.__cfgdir = ''
         self.__branch = ''
         self.__repopath = ''
         self.__purgeweeks = -1
@@ -36,6 +38,10 @@ class FinickConfig(object):
     is_ok      = property(lambda s : s.__is_ok,         _fail_setter)
 
     branch     = property(lambda s : s.__branch,        _fail_setter)
+
+    configname = property(lambda s : s.__config,        _fail_setter)
+
+    confdir    = property(lambda s : s.__cfgdir,        _fail_setter)
 
     repopath   = property(lambda s : s.__repopath,      _fail_setter)
 
@@ -66,6 +72,10 @@ class FinickConfig(object):
         self.__str_abort = cf.get('GitReviews','CommitStringAbortSession')
         self.__str_finish = cf.get('GitReviews','CommitStringFinishSession')
         self.__str_maint = cf.get('GitReviews','CommitStringMaintWithoutSession')
+        file_basename = os.path.basename( file_location )
+        self.__config = os.path.splitext( file_basename )[0]
+        location = os.path.dirname( file_location )
+        self.__cfgdir = os.path.normpath( location )
 
         # todo: we need to sanity check this more thoroughly before setting to true
         self.__is_ok = True
