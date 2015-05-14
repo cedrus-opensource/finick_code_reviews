@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+from __future__ import print_function # if you want to: print ( 'what', 'is', 'this' )
+from __future__ import division # py3 style. division promotes to floating point.
+from __future__ import unicode_literals
+from __future__ import absolute_import
+
 from finicky.basics import prelaunch_checklist_open
 from finicky.gitting import git_establish_session_readiness
 from finicky.db_file import db_integrity_check_open, db_open_session

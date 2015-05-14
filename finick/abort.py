@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+from __future__ import unicode_literals
+from __future__ import absolute_import
+
 from finicky.basics import prelaunch_checklist_close
 from finicky.db_file import db_integrity_check_close
 

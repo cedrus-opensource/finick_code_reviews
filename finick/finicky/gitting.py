@@ -1,4 +1,7 @@
 
+from __future__ import unicode_literals
+from __future__ import absolute_import
+
 import finicky.parse_config
 from finicky.error import FinickError
 
@@ -73,7 +76,9 @@ def _git_exec_and_return_stdout( command_string, repo_path ):
             cwd=repo_path
             )
 
-        git_output, git_errors = git_process.communicate()
+        git_output_bytes, git_errors_bytes = git_process.communicate()
+        git_output = git_output_bytes.decode('utf-8')
+        git_errors = git_errors_bytes.decode('utf-8')
 
         # one example of git output that goes to STDERR:
         # if you run 'git checkout XXX' while on XXX, the stderr is:

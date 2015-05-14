@@ -1,4 +1,7 @@
 
+from __future__ import unicode_literals
+from __future__ import absolute_import
+
 import finicky.parse_config
 from finicky.error import FinickError
 

@@ -1,4 +1,7 @@
 
+from __future__ import unicode_literals
+from __future__ import absolute_import
+
 try:
     # python 3 name
     import configparser
@@ -9,6 +12,7 @@ except ImportError:
 from finicky.error import FinickError
 
 import os
+from io import open
 
 def AssertType_FinickConfig( o ):
     rhs = FinickConfig.dummyinstance()
@@ -71,7 +75,8 @@ class FinickConfig(object):
     def _initialize_from_file( self, file_location ):
 
         cf = configparser.ConfigParser()
-        cf.read( file_location )
+        # it is crucial to open with utf-8 for py2/py3 cross-compatibility
+        cf.readfp( open( file_location, encoding='utf-8' ) )
 
         self.__branch = cf.get('GitReviews','MainReviewBranch')
         # on Windows, normpath converts forward slashes to backward slashes:

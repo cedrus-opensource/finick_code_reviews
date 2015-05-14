@@ -1,8 +1,12 @@
 
+from __future__ import unicode_literals
+from __future__ import absolute_import
+
 import finicky.gitting
 from finicky.error import FinickError
 
 import os
+from io import open
 
 def db_integrity_check_open( finick_config ):
 
@@ -24,7 +28,7 @@ def _db_integrity_check( finick_config, session_is_closing ):
     expected_db = finick_config.confdir + os.sep + finick_config.configname + '.txt'
 
     try:
-        with open( expected_db ) as f:
+        with open( expected_db, encoding='utf-8' ) as f:
             for line in f:
                 print ('')
 
