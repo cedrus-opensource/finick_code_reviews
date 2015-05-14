@@ -11,7 +11,6 @@ _quietness = ''
 def git_establish_session_readiness( finick_config ):
 
     finicky.parse_config.AssertType_FinickConfig( finick_config )
-    # can we pull/merge all from origin?
 
     _git_exec_and_return_stdout( 'git checkout ' + _quietness + finick_config.branch, finick_config.repopath )
 
@@ -22,6 +21,10 @@ def git_establish_session_readiness( finick_config ):
         raise Exception("Unable to start code-review session. Could not check out the required git branch.")
 
     _git_exec_and_return_stdout( 'git pull ' + _quietness + ' origin ' + finick_config.branch, finick_config.repopath )
+
+    # check for a currently-open, in-progress review session.
+    # if one is in progress, our version 0.0 code can give up.
+    # eventually, rather than give up, move our local HEAD to just prior/after that session, and start our session there
 
     # for now, either an exception was thrown, or else all went well:
     return True

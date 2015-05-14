@@ -2,6 +2,7 @@
 
 from finicky.basics import prelaunch_checklist_open
 from finicky.gitting import git_establish_session_readiness
+from finicky.db_file import db_integrity_check_open, db_open_session
 
 import os
 
@@ -21,15 +22,9 @@ def start_session():
     if True != git_establish_session_readiness( finick_config ):
         raise Exception("unable to establish git readiness")
 
-    # reviews file integrity check.
-    # upgrade file format if needed.
-    # purge older, completed data
-    # add new stuff to forward end of file (last line should always be file version info).
+    db_integrity_check_open( finick_config )
 
-    # generate assignments for this session.
-    # emit a remind message about todo items
-    # if there are no assignments for whoami, then we are done! (we can still commit changes to DB file)
-
+    db_open_session( finick_config )
 
 
 
