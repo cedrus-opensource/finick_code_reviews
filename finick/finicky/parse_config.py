@@ -1,5 +1,11 @@
 
-import ConfigParser
+try:
+    # python 3 name
+    import configparser
+except ImportError:
+    # old name
+    import ConfigParser as configparser
+
 from finicky.error import FinickError
 
 import os
@@ -64,7 +70,7 @@ class FinickConfig(object):
 
     def _initialize_from_file( self, file_location ):
 
-        cf = ConfigParser.ConfigParser()
+        cf = configparser.ConfigParser()
         cf.read( file_location )
 
         self.__branch = cf.get('GitReviews','MainReviewBranch')

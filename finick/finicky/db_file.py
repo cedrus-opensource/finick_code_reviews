@@ -26,7 +26,7 @@ def _db_integrity_check( finick_config, session_is_closing ):
     try:
         with open( expected_db ) as f:
             for line in f:
-                print ''
+                print ('')
 
     except:
         configfile = finick_config.confdir + os.sep + finick_config.configname

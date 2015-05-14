@@ -81,11 +81,11 @@ def _git_exec_and_return_stdout( command_string, repo_path ):
         # Furthermore, according the git mailing list, they use STDERR for 'verbose' messages,
         # that are not always errors. that is intentional on their part.
         if len(git_errors) > 0:
-            print today_datestr + 'stderr calling git (' + command_string + ') from path \'' + str(repo_path) + '\':'
-            print git_errors
+            print ( today_datestr + 'stderr calling git (' + command_string + ') from path \'' + str(repo_path) + '\':' )
+            print ( git_errors )
         else:
-            print str( today_datestr +
-                       'no git stderr in \'' + str(repo_path) + '\' (' + command_string + ')' )
+            print ( str( today_datestr +
+                         'no git stderr in \'' + str(repo_path) + '\' (' + command_string + ')' ) )
 
         # according to the git devs, return code is the proper indicator of success (not checking stderr)
         if git_process.returncode != 0:
@@ -94,7 +94,7 @@ def _git_exec_and_return_stdout( command_string, repo_path ):
             raise FinickError( err_msg )
 
     except:
-        print today_datestr + 'python exception calling git (' + command_string + ') from path \'' + str(repo_path) + '\''
+        print ( today_datestr + 'python exception calling git (' + command_string + ') from path \'' + str(repo_path) + '\'' )
         raise # re-throw the same exception that got us here in the first place
 
     return git_output
