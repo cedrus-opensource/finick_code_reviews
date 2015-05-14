@@ -17,9 +17,9 @@ def start_session():
     if False == finick_config.is_ok:
         raise Exception("unable to parse the config/ini file")
 
-
     # can we pull/merge all from origin?
-    git_establish_session_readiness( finick_config )
+    if True != git_establish_session_readiness( finick_config ):
+        raise Exception("unable to establish git readiness")
 
     # reviews file integrity check.
     # upgrade file format if needed.

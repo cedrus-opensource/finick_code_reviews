@@ -4,20 +4,35 @@ import finicky.parse_config
 import subprocess
 import datetime
 
+_quietness = ''
+# choose this to let git print more info to stderr:
+#_quietness = ' -q '
+
 def git_establish_session_readiness( finick_config ):
 
     finicky.parse_config.AssertType_FinickConfig( finick_config )
     # can we pull/merge all from origin?
 
-    results = 'no results'
-    #results = _git_exec_and_return_stdout( 'git log -8', finick_config.repopath )
-    print results
+    _git_exec_and_return_stdout( 'git checkout ' + _quietness + finick_config.branch, finick_config.repopath )
+
+    # the next command needs git 1.6.3 or newer, per http://stackoverflow.com/questions/1417957/show-just-the-current-branch-in-git
+    results = _git_exec_and_return_stdout( 'git rev-parse --abbrev-ref HEAD', finick_config.repopath )
+
+    if results.rstrip() != finick_config.branch:
+        raise Exception("Unable to start code-review session. Could not check out the required git branch.")
+
+    _git_exec_and_return_stdout( 'git pull ' + _quietness + ' origin ' + finick_config.branch, finick_config.repopath )
+
+    # for now, either an exception was thrown, or else all went well:
+    return True
+
 
 
 
 def _git_exec_and_return_stdout( command_string, repo_path ):
 
-    git_log_output = ''
+    git_output = ''
+    today_datestr = datetime.date.today().strftime("%Y-%m-%d") + ': '
 
     try:
         """
@@ -31,7 +46,7 @@ def _git_exec_and_return_stdout( command_string, repo_path ):
         we use 'shell=False', then command_string should be =
         ['git','log','-5'], or something similar
         """
-        git_log_process = subprocess.Popen(
+        git_process = subprocess.Popen(
             command_string,
             shell=True,
             stdin=subprocess.PIPE,
@@ -40,15 +55,28 @@ def _git_exec_and_return_stdout( command_string, repo_path ):
             cwd=repo_path
             )
 
-        git_log_output, git_log_errors = git_log_process.communicate()
+        git_output, git_errors = git_process.communicate()
 
-        if len(git_log_errors) > 0:
-            print 'error during calls to git log:'
-            print git_log_errors
+        # one example of git output that goes to STDERR:
+        # if you run 'git checkout XXX' while on XXX, the stderr is:
+        #    Already on 'XXX'
+        # Furthermore, according the git mailing list, they use STDERR for 'verbose' messages,
+        # that are not always errors. that is intentional on their part.
+        if len(git_errors) > 0:
+            print today_datestr + 'stderr calling git (' + command_string + ') from path \'' + str(repo_path) + '\':'
+            print git_errors
         else:
-            print datetime.date.today().strftime("%Y-%m-%d") + ' no git error in \'' + str(repo_path) + '\''
+            print str( today_datestr +
+                       'no git stderr in \'' + str(repo_path) + '\' (' + command_string + ')' )
+
+        # according to the git devs, return code is the proper indicator of success (not checking stderr)
+        if git_process.returncode != 0:
+            err_msg = str( 'return code ' + str(git_process.returncode) + ' calling git (' +
+                           command_string + ') from path \'' + str(repo_path) + '\'' )
+            raise Exception( err_msg )
 
     except:
-        print 'Failed to use \'git log\' to retrieve the most recent commits from \'' + str(repo_path) + '\''
+        print today_datestr + 'python exception calling git (' + command_string + ') from path \'' + str(repo_path) + '\''
+        raise # re-throw the same exception that got us here in the first place
 
-    return git_log_output
+    return git_output
