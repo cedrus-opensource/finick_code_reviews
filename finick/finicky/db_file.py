@@ -39,6 +39,8 @@ def db_open_session( finick_config ):
 
     finicky.parse_config.AssertType_FinickConfig( finick_config )
 
+    # if we are starting one session, there must not be any other session in progress (even from other INI file) [job of git_establish_session_readiness]
+
     # upgrade file format if needed.
     # purge older, completed data
     # add new stuff to forward end of file (last line should always be file version info).

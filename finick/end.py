@@ -16,6 +16,8 @@ def finish_session():
 
     prelaunch_checklist_close( os.path.basename(__file__) )
 
+    # is a session in progress?
+
     # reviews file integrity check.
     # reviews file should now be properly upgraded already.
     # last line in DB file should be file version info

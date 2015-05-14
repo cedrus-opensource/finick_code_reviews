@@ -35,6 +35,7 @@ def git_establish_session_readiness( finick_config ):
 
     _git_exec_and_return_stdout( 'git pull ' + _quietness + ' origin ' + finick_config.branch, finick_config.repopath )
 
+    # if we are starting one session, there must not be any other session in progress (even from other INI file)
     # check for a currently-open, in-progress review session.
     # if one is in progress, our version 0.0 code can give up.
     # eventually, rather than give up, move our local HEAD to just prior/after that session, and start our session there
