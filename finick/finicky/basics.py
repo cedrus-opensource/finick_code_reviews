@@ -8,6 +8,24 @@ import finicky.parse_config
 from finicky.error import FinickError
 
 import glob
+import gettext
+import locale
+
+# Set up message catalog access.
+# Python-3.4.3//Tools/i18n/pygettext.py finick/finicky/*py *py finick/*py # to generate pot
+# The hard-coded path is lame. This is a version 0.0 kind of thing.
+# make sure this is called as finick/start.py (use os.sep). this way we can count on CWD for finding locale folder
+_t = gettext.translation('finick_code_review', './finick/locale', ['en_US']) #, fallback=True)
+try:
+    # for older python 2:
+    _ = _t.ugettext
+except AttributeError:
+    _ = _t.gettext
+"""
+i probably will want to end up using the INSTALL-based way to get _, from here:
+http://www.wefearchange.org/2012/06/the-right-way-to-internationalize-your.html
+"""
+
 
 def prelaunch_checklist_open( calling_filename ):
     return _prelaunch_checklist( calling_filename, False )

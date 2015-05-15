@@ -5,7 +5,7 @@ from __future__ import division # py3 style. division promotes to floating point
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
-from finicky.basics import prelaunch_checklist_open
+from finicky.basics import prelaunch_checklist_open, _
 from finicky.gitting import git_establish_session_readiness
 from finicky.db_file import db_integrity_check_open, db_open_session
 from finicky.error import FinickError
@@ -36,4 +36,6 @@ def start_session():
 
 
 start_session()
+
+#print ( _('test of gettext translation') )
 

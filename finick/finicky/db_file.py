@@ -6,6 +6,7 @@ from __future__ import absolute_import
 
 import finicky.gitting
 from finicky.error import FinickError
+from finicky.basics import _
 
 import os
 from io import open
@@ -32,7 +33,7 @@ def _db_integrity_check( finick_config, session_is_closing ):
     try:
         with open( expected_db, encoding='utf-8' ) as f:
             for line in f:
-                print ('')
+                print ( _('someline') )
 
     except:
         configfile = finick_config.confdir + os.sep + finick_config.configname
