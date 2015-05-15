@@ -1,6 +1,5 @@
-
 from __future__ import print_function
-from __future__ import division # py3 style. division promotes to floating point.
+from __future__ import division  # py3 style. division promotes to floating point.
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
@@ -16,15 +15,18 @@ from finicky.error import FinickError
 import os
 from io import open
 
-def AssertType_FinickConfig( o ):
+
+def AssertType_FinickConfig(o):
     rhs = FinickConfig.dummyinstance()
     incoming_type = str(type(o))
     if type(o) != type(rhs):
-        raise FinickError("AssertType_FinickConfig failed. FinickConfig was required, but instead we got: " + incoming_type)
+        raise FinickError(
+            "AssertType_FinickConfig failed. FinickConfig was required, but instead we got: "
+            + incoming_type)
+
 
 class FinickConfig(object):
-
-    def __init__(self, file_location, defaults_only = False):
+    def __init__(self, file_location, defaults_only=False):
         self.__is_ok = False
 
         self.__config = ''
@@ -40,14 +42,16 @@ class FinickConfig(object):
         self.__verbose = -1
 
         if False == defaults_only:
-            self._initialize_from_file( file_location )
+            self._initialize_from_file(file_location)
 
     @classmethod
     def dummyinstance(cls):
-        return cls('',True)
+        return cls('', True)
 
     def _fail_setter(self, value):
         raise FinickError("FinickConfig objects are immutable")
+
+    # yapf: disable
 
     is_ok      = property(lambda s : s.__is_ok,         _fail_setter)
 
@@ -73,27 +77,29 @@ class FinickConfig(object):
 
     verbosity  = property(lambda s : s.__verbose,       _fail_setter)
 
+    # yapf: enable
 
-    def _initialize_from_file( self, file_location ):
+    def _initialize_from_file(self, file_location):
 
         cf = configparser.ConfigParser()
         # it is crucial to open with utf-8 for py2/py3 cross-compatibility
-        cf.readfp( open( file_location, encoding='utf-8' ) )
+        cf.readfp(open(file_location, encoding='utf-8'))
 
-        self.__branch = cf.get('GitReviews','MainReviewBranch')
+        self.__branch = cf.get('GitReviews', 'MainReviewBranch')
         # on Windows, normpath converts forward slashes to backward slashes:
-        self.__repopath = os.path.normpath(cf.get('GitReviews','RepoPath'))
-        self.__purgeweeks = int(cf.get('GitReviews','WeeksTilPurge'))
-        self.__ourepochstart = int(cf.get('GitReviews','BeginningOfTime'))
-        self.__str_start = cf.get('GitReviews','CommitStringStartSession')
-        self.__str_abort = cf.get('GitReviews','CommitStringAbortSession')
-        self.__str_finish = cf.get('GitReviews','CommitStringFinishSession')
-        self.__str_maint = cf.get('GitReviews','CommitStringMaintWithoutSession')
-        file_basename = os.path.basename( file_location )
-        self.__config = os.path.splitext( file_basename )[0]
-        location = os.path.dirname( file_location )
-        self.__cfgdir = os.path.normpath( location )
-        self.__verbose = int(cf.get('GitReviews','Verbosity'))
+        self.__repopath = os.path.normpath(cf.get('GitReviews', 'RepoPath'))
+        self.__purgeweeks = int(cf.get('GitReviews', 'WeeksTilPurge'))
+        self.__ourepochstart = int(cf.get('GitReviews', 'BeginningOfTime'))
+        self.__str_start = cf.get('GitReviews', 'CommitStringStartSession')
+        self.__str_abort = cf.get('GitReviews', 'CommitStringAbortSession')
+        self.__str_finish = cf.get('GitReviews', 'CommitStringFinishSession')
+        self.__str_maint = cf.get('GitReviews',
+                                  'CommitStringMaintWithoutSession')
+        file_basename = os.path.basename(file_location)
+        self.__config = os.path.splitext(file_basename)[0]
+        location = os.path.dirname(file_location)
+        self.__cfgdir = os.path.normpath(location)
+        self.__verbose = int(cf.get('GitReviews', 'Verbosity'))
 
         # todo: we need to sanity check this more thoroughly before setting to true
         self.__is_ok = True

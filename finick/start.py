@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-from __future__ import print_function # if you want to: print ( 'what', 'is', 'this' )
-from __future__ import division # py3 style. division promotes to floating point.
+from __future__ import print_function  # if you want to: print ( 'what', 'is', 'this' )
+from __future__ import division  # py3 style. division promotes to floating point.
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
@@ -13,34 +13,26 @@ from finicky.error import FinickError
 import os
 
 
-
-
-
 def start_session():
 
     # need to retrieve some kind of 'config object'
-    finick_config = prelaunch_checklist_open( os.path.basename(__file__) )
+    finick_config = prelaunch_checklist_open(os.path.basename(__file__))
 
     if False == finick_config.is_ok:
         raise FinickError("unable to parse the config/ini file")
 
     # can we pull/merge all from origin?
-    if True != git_establish_session_readiness( finick_config ):
+    if True != git_establish_session_readiness(finick_config):
         raise FinickError("unable to establish git readiness")
 
-    db_handle = db_integrity_check_open( finick_config )
+    db_handle = db_integrity_check_open(finick_config)
 
     if None != db_handle:
-        assignments, todos = db_open_session( finick_config, db_handle )
+        assignments, todos = db_open_session(finick_config, db_handle)
 
         # if there are no assignments for whoami, then we are done! (we can still commit changes to DB file)
-
-
-
-
 
 
 start_session()
 
 #print ( _('test of gettext translation') )
-

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-from __future__ import division # py3 style. division promotes to floating point.
+from __future__ import division  # py3 style. division promotes to floating point.
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
@@ -13,7 +13,7 @@ import os
 
 def abort_session():
 
-    prelaunch_checklist_close( os.path.basename(__file__) )
+    prelaunch_checklist_close(os.path.basename(__file__))
 
     # is a session in progress?
 
@@ -27,4 +27,3 @@ def abort_session():
 
 
 abort_session()
-

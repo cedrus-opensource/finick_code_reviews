@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-from __future__ import division # py3 style. division promotes to floating point.
+from __future__ import division  # py3 style. division promotes to floating point.
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
 from finicky.basics import prelaunch_checklist_close
 
 import os
-
-
 """
 there is a possibility that the resulting 'forefront' will not be a commit that
 produces a working build (on all platforms) when checked out.
@@ -17,9 +15,10 @@ We need a contingency plan on the ZERO branch for when that happens.
 In that case the tagged zero-forefront should not advance.
 """
 
+
 def finish_session():
 
-    prelaunch_checklist_close( os.path.basename(__file__) )
+    prelaunch_checklist_close(os.path.basename(__file__))
 
     # is a session in progress?
 
