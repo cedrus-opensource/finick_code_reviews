@@ -32,8 +32,9 @@ def git_establish_session_readiness(finick_config):
 
     finicky.parse_config.AssertType_FinickConfig(finick_config)
 
-    _git_exec_and_return_stdout('git checkout ' + _quietness +
-                                finick_config.branch, finick_config.repopath)
+    _git_exec_and_return_stdout(
+        'git checkout ' + _quietness + finick_config.branch,
+        finick_config.repopath)
 
     # the next command needs git 1.6.3 or newer, per http://stackoverflow.com/questions/1417957/show-just-the-current-branch-in-git
     results = _git_exec_and_return_stdout('git rev-parse --abbrev-ref HEAD',
@@ -43,8 +44,9 @@ def git_establish_session_readiness(finick_config):
         raise FinickError(
             "Unable to start code-review session. Could not check out the required git branch.")
 
-    _git_exec_and_return_stdout('git pull ' + _quietness + ' origin ' +
-                                finick_config.branch, finick_config.repopath)
+    _git_exec_and_return_stdout(
+        'git pull ' + _quietness + ' origin ' + finick_config.branch,
+        finick_config.repopath)
 
     # if we are starting one session, there must not be any other session in progress (even from other INI file)
     # check for a currently-open, in-progress review session.

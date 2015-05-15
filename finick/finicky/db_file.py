@@ -46,7 +46,7 @@ class DbTextFile(object):
         raise FinickError(
             "The value you are trying to assign to in DbTextFile is read-only.")
 
-    is_ok      = property(lambda s : s.__is_ok,         _fail_setter)
+    is_ok = property(lambda s: s.__is_ok, _fail_setter)
 
     def _initialize_from_file(self, finick_config):
 
