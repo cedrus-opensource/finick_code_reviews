@@ -24,7 +24,7 @@ def finish_session():
 
     # reviews file integrity check.
     # reviews file should now be properly upgraded already.
-    # last line in DB file should be file version info
+    # first line in DB file should be file version info
 
     # assignments file integrity check.
 
