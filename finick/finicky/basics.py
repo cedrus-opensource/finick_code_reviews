@@ -28,16 +28,16 @@ http://www.wefearchange.org/2012/06/the-right-way-to-internationalize-your.html
 
 
 def prelaunch_checklist_open( calling_filename ):
-    return _prelaunch_checklist( calling_filename, False )
-
-def prelaunch_checklist_close( calling_filename ):
     return _prelaunch_checklist( calling_filename, True )
 
-def _prelaunch_checklist( calling_filename, please_use_db_file_datetime ):
+def prelaunch_checklist_close( calling_filename ):
+    return _prelaunch_checklist( calling_filename, False )
+
+def _prelaunch_checklist( calling_filename, is_session_starting ):
 
     # make sure this is called as finick/start.py (use os.sep). this way we can count on CWD for finding config
-    # config integrity check. (older than NOW).
-    # are we on the right branch?
+    # config integrity check. (older than start of session to prevent mid-session reconfig).
+    # are we on the right branch? (check this when False==is_session_starting. on start we will check out the branch)
     # do a git-whoami and make sure we have an email
 
     all_cwd_inis = glob.glob('*ini')
