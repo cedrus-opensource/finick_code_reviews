@@ -13,16 +13,16 @@ from io import open
 
 def db_integrity_check_open( finick_config ):
 
-    _db_integrity_check( finick_config, False )
+    _db_integrity_check( finick_config, True )
 
 def db_integrity_check_close( finick_config ):
 
     # reviews file should now be properly upgraded already.
     # last line in DB file should be file version info
-    _db_integrity_check( finick_config, True )
+    _db_integrity_check( finick_config, False )
 
 
-def _db_integrity_check( finick_config, session_is_closing ):
+def _db_integrity_check( finick_config, is_session_starting ):
 
     finicky.parse_config.AssertType_FinickConfig( finick_config )
 
