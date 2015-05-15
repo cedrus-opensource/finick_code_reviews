@@ -28,9 +28,14 @@ def start_session():
     if True != git_establish_session_readiness( finick_config ):
         raise FinickError("unable to establish git readiness")
 
-    db_integrity_check_open( finick_config )
+    db_handle = db_integrity_check_open( finick_config )
 
-    db_open_session( finick_config )
+    if None != db_handle:
+        assignments, todos = db_open_session( finick_config, db_handle )
+
+        # if there are no assignments for whoami, then we are done! (we can still commit changes to DB file)
+
+
 
 
 
