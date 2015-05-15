@@ -50,6 +50,25 @@ def git_establish_session_readiness( finick_config ):
     return True
 
 
+@_dec_assign_to_globals
+def git_repo_contains_committed_file( finick_config, which_file ):
+
+    finicky.parse_config.AssertType_FinickConfig( finick_config )
+
+    # this can be a false positive if the file is on disk, but has been deleted from the repo
+    results = _git_exec_and_return_stdout( 'git log -1 --oneline ' + which_file, finick_config.repopath )
+
+    problem_01 = 0 == len(results)
+
+    # (addresses the false positive mentioned above)
+    # this returns an empty string even if we got a false positive earlier.
+    # (we don't use ls-files alone, because it gives a false positive if you staged a file but never committed it)
+    results = _git_exec_and_return_stdout( 'git ls-files ' + which_file, finick_config.repopath )
+
+    problem_02 = 0 == len(results)
+
+    return not ( problem_01 or problem_02 )
+
 
 
 def _git_exec_and_return_stdout( command_string, repo_path ):
