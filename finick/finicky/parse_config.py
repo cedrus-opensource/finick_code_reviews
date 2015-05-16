@@ -40,6 +40,7 @@ class FinickConfig(object):
         self.__str_finish = ''
         self.__str_maint = ''
         self.__verbose = -1
+        self.__invoker_eml = ''
 
         if False == defaults_only:
             self._initialize_from_file(file_location)
@@ -50,6 +51,10 @@ class FinickConfig(object):
 
     def _fail_setter(self, value):
         raise FinickError("FinickConfig objects are immutable")
+
+    def _set_email(self, value):
+        # todo: verify it is a valid-looking email
+        self.__invoker_eml = value
 
     # yapf: disable
 
@@ -76,6 +81,9 @@ class FinickConfig(object):
     str_maint  = property(lambda s : s.__str_maint,     _fail_setter)
 
     verbosity  = property(lambda s : s.__verbose,       _fail_setter)
+
+    # email address of the reviewer (the person driving the review session)
+    reviewer   = property(lambda s : s.__invoker_eml,   _set_email  )
 
     # yapf: enable
 

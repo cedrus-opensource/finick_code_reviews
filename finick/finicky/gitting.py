@@ -32,6 +32,8 @@ def git_establish_session_readiness(finick_config):
 
     finicky.parse_config.AssertType_FinickConfig(finick_config)
 
+    _git_current_user_email(finick_config)
+
     _git_exec_and_return_stdout(
         'git checkout ' + _quietness + finick_config.branch,
         finick_config.repopath)
@@ -77,6 +79,22 @@ def git_repo_contains_committed_file(finick_config, which_file):
     problem_02 = 0 == len(results)
 
     return not (problem_01 or problem_02)
+
+
+@_dec_assign_to_globals
+def _git_current_user_email(finick_config):
+
+    finicky.parse_config.AssertType_FinickConfig(finick_config)
+
+    results = _git_exec_and_return_stdout('git config user.email',
+                                          finick_config.repopath)
+    results = results.rstrip().lstrip()
+
+    if len(results) < 5 or len(results) > 255:
+        raise FinickError(
+            'Refusing to use what seems like an invalid email: ' + results)
+
+    finick_config.reviewer = results
 
 
 def _git_exec_and_return_stdout(command_string, repo_path):
