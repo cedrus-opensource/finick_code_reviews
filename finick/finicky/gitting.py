@@ -8,6 +8,8 @@ from finicky.error import FinickError
 
 import subprocess
 import datetime
+import os
+from io import open
 
 _quietness = ''  # empty string means the ABSENCE of the quiet flag. absence means NO suppressed git stderr
 
@@ -79,6 +81,36 @@ def git_repo_contains_committed_file(finick_config, which_file):
     problem_02 = 0 == len(results)
 
     return not (problem_01 or problem_02)
+
+
+@_dec_assign_to_globals
+def _git_list_submodules(finick_config):
+
+    finicky.parse_config.AssertType_FinickConfig(finick_config)
+
+    submodule_paths = []
+
+    gitmod_file = finick_config.repopath + os.sep + '.gitmodules'
+
+    # not all repositories have submodules. that is ok.
+    found = os.path.isfile(gitmod_file)
+
+    if found:
+        try:
+            with open(gitmod_file, encoding='utf-8') as f:
+                # in .gitmodules, can a path have spaces in it??
+                # would any of this still work in that case?
+                for line in f:
+                    sep = 'path = '
+                    if sep in line:
+                        line_parts = line.split(sep)
+                        submodule_paths += [line_parts[1].rstrip()]
+
+        except IOError:
+            raise FinickError(
+                'IOError while trying to read the .gitmodules file')
+
+    return submodule_paths
 
 
 @_dec_assign_to_globals
