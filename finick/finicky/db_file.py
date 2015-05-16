@@ -153,6 +153,12 @@ class DbTextFile(object):
                 err_msg += 'While using config \'' + configfile + '\', you must have the DB file \'' + expected_db + '\''
                 raise FinickError(err_msg)
 
+        if len(self.__rows) == 0:
+            # if we got here with no exceptions, but the __rows list is empty,
+            # then we must have gotten an empty (fresh new) file.
+            # in that case, we may as well say the file is in 'our version' format:
+            self.__version_from_fileread = self.__CURR_FILE_VER
+
         self.__is_ok = is_ok
         # since all went well, store the config for use by other member functions later:
         self.__finick_config = finick_config
@@ -170,6 +176,10 @@ class DbTextFile(object):
     def flush_back_to_disk(self):
 
         # upgrade file format if needed. (if some on a team need the old format, this requires configuration options)
+        if self.__version_from_fileread < self.__CURR_FILE_VER:
+            raise FinickError(
+                'It seems we incremented __CURR_FILE_VER without a plan to upgrade older files!'
+                ' Add implementation here, please!')
 
         # (first line should always be file version info).
         pass
