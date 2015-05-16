@@ -86,7 +86,6 @@ class DbTextFile(object):
 
             try:
                 with open(expected_db, encoding='utf-8') as f:
-                    db_rows = 0  # db_rows is NOT file rows. two files rows can merge to 1 db_row
                     file_comments_waiting = ''
 
                     for line in f:
@@ -140,7 +139,6 @@ class DbTextFile(object):
                                     'Bad row: ' + linetext)
 
                             self.__rows.append(drow)
-                            db_rows += 1
 
                     # if we made it this far without exceptions:
                     is_ok = True
@@ -178,6 +176,7 @@ class DbTextFile(object):
 
     def purge_older_reviewed_commits(self):
 
+        # TODO
         pass
 
     def add_new_commits(self):
@@ -222,16 +221,16 @@ def db_open_session(finick_config, db_handle):
     finicky.parse_config.AssertType_FinickConfig(finick_config)
     AssertType_DbTextFile(db_handle)
 
-    print('db open session')
-
     # if we are starting one session, there must not be any other session in progress (even from other INI file) [job of git_establish_session_readiness]
 
     db_handle.purge_older_reviewed_commits()
     db_handle.add_new_commits()
-    db_handle.flush_back_to_disk()
 
     assignments = db_handle.generate_assignments_for_this_session()
 
     todos = db_handle.generate_todos_for_this_session()
+
+    # do this AFTER generating assignments, so the 'NOW' markers can show up
+    db_handle.flush_back_to_disk()
 
     return assignments, todos
