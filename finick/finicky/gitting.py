@@ -47,7 +47,20 @@ def git_establish_session_readiness(finick_config):
     if results.rstrip() != finick_config.branch:
         raise FinickError(
             "Unable to start code-review session. Could not check out the required git branch.")
+    """
+    we might consider adding this to the 'git pull' if submodule actions are causing slow down.
 
+       --[no-]recurse-submodules[=yes|on-demand|no]
+
+           This option controls if new commits of all populated
+           submodules should be fetched too (see git-config(1) and
+           gitmodules(5)). That might be necessary to get the data
+           needed for merging submodule commits, a feature git learned
+           in 1.7.3. Notice that the result of a merge will not be
+           checked out in the submodule,'git submodule update' has to
+           be called afterwards to bring the work tree up to date with
+           the merge result.
+    """
     _git_exec_and_return_stdout(
         'git pull ' + _quietness + ' origin ' + finick_config.branch,
         finick_config.repopath)
@@ -66,6 +79,7 @@ def git_repo_contains_committed_file(finick_config, which_file):
 
     finicky.parse_config.AssertType_FinickConfig(finick_config)
 
+    # log has this {--ignore-submodules[=<when>]}, but it only matters for showing patches? (diffs)
     # this can be a false positive if the file is on disk, but has been deleted from the repo
     results = _git_exec_and_return_stdout('git log -1 --oneline ' + which_file,
                                           finick_config.repopath)
@@ -81,6 +95,26 @@ def git_repo_contains_committed_file(finick_config, which_file):
     problem_02 = 0 == len(results)
 
     return not (problem_01 or problem_02)
+
+
+@_dec_assign_to_globals
+def _git_difftree_does_find_content(finick_config, commit_hash_str):
+
+    results = _git_exec_and_return_stdout(
+        'git diff-tree --cc --pretty=oneline ' + commit_hash_str,
+        finick_config.repopath)
+
+    # we expect the oneline info (on one line), then a blank line, then (optionally) a diff
+
+    #partition returns a 3-tuple containing the part before the
+    #separator, the separator itself, and the part after
+    oneline_info, separator, tail = results.partition('\n')
+    blank_line, separator, tail = tail.partition('\n')
+    diff_text, separator, tail = tail.partition('\n')
+
+    we_have_a_diff = not diff_text == ''
+
+    return we_have_a_diff
 
 
 @_dec_assign_to_globals
@@ -111,6 +145,144 @@ def _git_list_submodules(finick_config):
                 'IOError while trying to read the .gitmodules file')
 
     return submodule_paths
+
+
+@_dec_assign_to_globals
+def git_retrieve_history(finick_config):
+
+    finicky.parse_config.AssertType_FinickConfig(finick_config)
+
+    # --date=local shows timestamps in user's local timezone.
+    # meaning that the dates are 'translated' to the timezone of the current
+    # machine where somebody is running the finick tool. This means
+    # that if two people share a repo but are in different time zones,
+    # then the times coming out of this log will be DIFFERENT depending
+    # on which person runs finick. This needs to be addressed at some point.
+    # for now, showing any datetime at all is really just a nicety, and
+    # the dates are not used for any logic or decision making
+    """
+    git format options for commit messages:
+    %s: subject
+    %b: body
+    %B: raw body (unwrapped subject and body)
+    """
+    """
+    so you have an idea about what the git output that is being parsed here looks like raw:
+
+    git log --topo-order --numstat --date=local  --pretty=format:\"commit %H$%ae$%aD$%s\"  --since=1427763600
+
+    commit rrc084e4x88b74rx38e1x4e88db53575ec4cd15d$deva@acmecorp.com$Thu, 14 Jan 1999 13:43:32 -0700$Merge branch 'ABC.0' of github.com:acmecorp/Acmeproject into ABC.0
+    commit 8bc1c6xe1750b7bc789x00b8ee619718rc7ecx11$devb@acmecorp.com$Thu, 14 Jan 1999 12:56:43 -0700$Removing the questionable bandaid from the minimal element class, making sublists a subclass of it. Minimal_BBElement is still a work in progress.
+    12      2       src/Acmeproject/BBCore/Minimal_BBElement.cpp
+    6       2       src/Acmeproject/BBCore/Minimal_BBElement.h
+    3       3       src/Acmeproject/BBCore/BBElement.cpp
+    7       13      src/Acmeproject/BBCore/BBElement.h
+
+    commit 68xx8809c58c65885791c73ee8x389b8cb79031b$deva@acmecorp.com$Thu, 14 Jan 1999 11:36:03 -0700$Merge branch 'ABC.0' of github.com:acmecorp/Acmeproject into ABC.0
+    commit rbb67066151c71979037eecex759rc8c1c00e0xb$deva@acmecorp.com$Thu, 14 Jan 1999 11:35:53 -0700$setting the config value for Verbosity in code_reviews/acmeproject_reviews.ini
+    2       1       code_reviews/acmeproject_reviews.ini
+
+    commit 8rbb03dr4x86574e78883ecb4c6x3c7b89d8cc7e$devb@acmecorp.com$Thu, 14 Jan 1999 10:16:02 -0700$Fixing mac builds.
+    2       0       src/Acmeproject/BBCore/Minimal_BBElement.h
+
+    commit c4rd1rr8888rb252ecb305d84026168867c8cbbe$devb@acmecorp.com$Thu, 14 Jan 1999 09:06:17 -0700$Another crack at sorting out the headers for mac without actually switching over.
+    8       1       src/Acmeproject/BBCore/Minimal_BBElement.h
+    0       9       src/Acmeproject/BBCore/BBElement.h
+
+    commit rd90r7007re89x79ed9e8735x61e6457eed947ec$deva@acmecorp.com$Wed, 13 Jan 1999 16:27:27 -0700$Merge branch 'ABC.0' of github.com:acmecorp/Acmeproject into ABC.0
+    commit 091rx85drbx79d66399c895d59drc7c0948e7268$devb@acmecorp.com$Wed, 13 Jan 1999 16:20:25 -0700$I think this is what broke mac builds.
+    2       0       src/Acmeproject/BBCore/BBElement.h
+
+    """
+
+    SEP_TOKEN = 'commit '
+    COL_DELIM = '\b'  # note: if a commit message contains this, then beware!
+
+    # do NOT exclude merges! merges often deserve review.
+    # see: http://haacked.com/archive/2014/02/21/reviewing-merge-commits/
+    # use %aD to guarantee parsing by strptime.
+    results = _git_exec_and_return_stdout(
+        'git log --topo-order --numstat --date=local  --pretty=format:\"' + SEP_TOKEN + '%H'
+        + COL_DELIM + '%ae' + COL_DELIM + '%aD' + COL_DELIM + '%s\"  --since='
+        + str(
+            finick_config.startepoch), finick_config.repopath)
+
+    # the first one (results[0]) will still have SEP_TOKEN on the front of it
+    results = results.split('\n' + SEP_TOKEN)
+
+    if len(results) > 0:
+        empty_result_0 = results[0] == ''
+        expected_prefix = results[0].startswith(SEP_TOKEN)
+        # either we had an empty result, or else we had better have detected our prefix:
+        if not (empty_result_0 or expected_prefix):
+            raise FinickError(
+                'Assumption violated. why doesn\'t this start with SEP_TOKEN?')
+
+        if empty_result_0:
+            del results[0]  # prevent us from looping over results
+        else:
+            results[0] = results[0].replace(SEP_TOKEN, '', 1)
+
+    list_of_subs = _git_list_submodules(finick_config)
+    # there are TABS on the next line. it matches git output.
+    sub_exclusions = ['1\t1\t' + s for s in list_of_subs]
+
+    list_of_tuples = []
+
+    for each_commit in results:
+        #partition returns a 3-tuple containing the part before the
+        #separator, the separator itself, and the part after
+        commit_pretty, separator, numstat_lines = each_commit.partition('\n')
+
+        commit_is_hidden = False
+        reason_to_hide = ''
+
+        nonempty_lines = 0
+        submodule_lines = 0
+        numstat_lines = numstat_lines.split('\n')
+        for l in numstat_lines:
+            l = l.lstrip().rstrip()
+            if l == '':
+                continue
+
+            nonempty_lines += 1
+
+            if l in sub_exclusions:
+                submodule_lines += 1
+
+        if nonempty_lines == 0:
+            # an absence of numstat_lines is taken to indicate a MERGE commit.
+            # if we are incorrect and there is another way to get
+            # here, things should still work out ok.
+
+            # if it is a fully auto-merge, then hide.
+            c_hash = commit_pretty.split(COL_DELIM)[0]
+            non_auto = _git_difftree_does_find_content(finick_config, c_hash)
+            if not non_auto:
+                # appears to be an auto-merge
+                commit_is_hidden = True
+                reason_to_hide = 'auto merge commit. no diff available for review.'
+
+        elif nonempty_lines == submodule_lines:
+            # all we had in this commit were submodule 'pointer' changes
+            # (some projects might want these reviewed. make that an option later.)
+            commit_is_hidden = True
+            reason_to_hide = 'no content changes to this repo. only re-pointing which commits submodules point to.'
+
+        else:  # handle exclusions based on strings.
+            parts = commit_pretty.split(COL_DELIM)
+            if len(parts) != 4:
+                raise FinickError(
+                    'Git log formatted output did not parse cleanly into 4 parts. Did a stray COL_DELIM appear in a commit subject?')
+
+            if finick_config.contains_a_configurable_tool_string(parts[3]):
+                commit_is_hidden = True
+                reason_to_hide = 'finick-driven automated commit excluded from review'
+
+        list_of_tuples.append(
+            (commit_pretty, commit_is_hidden, reason_to_hide))
+
+    return list_of_tuples
 
 
 @_dec_assign_to_globals
