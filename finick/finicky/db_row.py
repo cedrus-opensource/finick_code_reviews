@@ -19,13 +19,16 @@ class DbRow(object):
 
         self.__TYPE_ERRORTYPE = -1
         # yapf: disable
-        self.__TYPE_OK   = 1  # reviewer approved/accepted the commit
-        self.__TYPE_REJ  = 2  # reviewer rejected the commit
-        self.__TYPE_WAIT = 3  # not yet reviewed. awaiting review.
-        self.__TYPE_TFIX = 4  # when a reviewer marks TFIX, this means both approval AND the commit closes a todo
-        self.__TYPE_TODO = 5  # reviewer accepts the commit, contingent upon further items being addressed
-        self.__TYPE_HIDE = 6  # a commit that is 'null' for reviewing purposes. hidden/excluded from the process.
-        self.__TYPE_NOW  = 7  # assigned for review during the current active session
+        self.__TYPE_OK   =  1  # reviewer approved/accepted the commit
+        self.__TYPE_OOPS =  2  # reviewer rejected the commit
+        self.__TYPE_WAIT =  3  # not yet reviewed. awaiting review.
+        self.__TYPE_TFIX =  4  # when a reviewer marks TFIX, this means both approval AND the commit closes a todo
+        self.__TYPE_TODO =  5  # reviewer defers the commit, contingent upon further items being addressed
+        self.__TYPE_HIDE =  6  # a commit that is 'null' for reviewing purposes. hidden/excluded from the process.
+        self.__TYPE_NOW  =  7  # assigned for review during the current active session
+        self.__TYPE_PLS  =  8  # (short for 'please'). like todo, only we accept the commit, but with further requests for later.
+        self.__TYPE_PFIX =  9  # means both approval and the commit closes a PLS ('please' request)
+        self.__TYPE_RVRT = 10  # a revert/reversal that is accepted and addresses a prior OOPS
         # yapf: enable
 
         self.__file_comment = file_comment
@@ -46,7 +49,7 @@ class DbRow(object):
 
     TYPE_OK    = property(lambda s : s.__TYPE_OK,    _fail_setter)
 
-    TYPE_REJ   = property(lambda s : s.__TYPE_REJ,   _fail_setter)
+    TYPE_OOPS  = property(lambda s : s.__TYPE_OOPS,  _fail_setter)
 
     TYPE_WAIT  = property(lambda s : s.__TYPE_WAIT,  _fail_setter)
 
@@ -57,6 +60,12 @@ class DbRow(object):
     TYPE_HIDE  = property(lambda s : s.__TYPE_HIDE,  _fail_setter)
 
     TYPE_NOW   = property(lambda s : s.__TYPE_NOW,   _fail_setter)
+
+    TYPE_PLS   = property(lambda s : s.__TYPE_PLS,   _fail_setter)
+
+    TYPE_PFIX  = property(lambda s : s.__TYPE_PFIX,  _fail_setter)
+
+    TYPE_RVRT  = property(lambda s : s.__TYPE_RVRT,  _fail_setter)
 
 
     row_type   = property(lambda s : s.__rowtype,    _fail_setter)
@@ -132,8 +141,8 @@ class DbRow(object):
     def _convert_string_to_rowtype_constant(self, rowtype_string, linetext):
         if rowtype_string == 'OK':
             return self.__TYPE_OK
-        elif rowtype_string == 'REJ':
-            return self.__TYPE_REJ
+        elif rowtype_string == 'OOPS':
+            return self.__TYPE_OOPS
         elif rowtype_string == 'WAIT':
             return self.__TYPE_WAIT
         elif rowtype_string == 'TFIX':
@@ -144,6 +153,12 @@ class DbRow(object):
             return self.__TYPE_HIDE
         elif rowtype_string == 'NOW':
             return self.__TYPE_NOW
+        elif rowtype_string == 'PLS':
+            return self.__TYPE_PLS
+        elif rowtype_string == 'PFIX':
+            return self.__TYPE_PFIX
+        elif rowtype_string == 'RVRT':
+            return self.__TYPE_RVRT
         else:
             err = 'Invalid row type: ' + rowtype_string + ', on row: [' + linetext + ']'
             raise FinickError(err)
