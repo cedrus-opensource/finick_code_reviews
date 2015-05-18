@@ -57,6 +57,22 @@ class FinickConfig(object):
         self.__invoker_eml = value
 
     # yapf: disable
+    def contains_a_configurable_tool_string(self, the_string):
+        if (self.__str_start in the_string or
+            self.__str_abort in the_string or
+            self.__str_finish in the_string or
+            self.__str_maint in the_string):
+            return True
+        else:
+            return False
+    # yapf: enable
+
+    def get_all_commit_strings(self):
+        return [self.__str_start, self.__str_abort, self.__str_finish,
+                self.__str_maint]
+
+
+    # yapf: disable
 
     is_ok      = property(lambda s : s.__is_ok,         _fail_setter)
 
