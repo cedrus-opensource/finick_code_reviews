@@ -53,6 +53,7 @@ class DbRow(object):
         self.__commit_datestr = ''
         self.__rowtype = self.__TYPE_ERRORTYPE
         self.__reviewer = ''
+        # each todo ref will be the FIRST 10 of a hash. always len 10.
         self.__todo_refs = []
         self.__action_comment = ''
         # at some point we might need more structure, like a forefront DATETIME object:
@@ -91,9 +92,17 @@ class DbRow(object):
 
     row_type   = property(lambda s : s.__rowtype,    _fail_setter)
 
+    todo_refs  = property(lambda s : s.__todo_refs,  _fail_setter)
+
+    committer  = property(lambda s : s.__committer,  _fail_setter)
+
     commithash = property(lambda s : s.__commit_hash, _fail_setter)
 
     # yapf: enable
+
+    def assign_for_current_review_session(self, reviewer_email):
+        self.__rowtype = self.__TYPE_NOW
+        self.__reviewer = reviewer_email
 
     def _initialize_from_string(self, string_to_parse):
         """
@@ -144,6 +153,7 @@ class DbRow(object):
         if len_of_row_parts >= 5:
             self.__reviewer = row_parts[4]
 
+        # each todo ref will be the FIRST 10 of a hash. always len 10.
         if len_of_row_parts >= 6:
             # we now can have either 1 more value or 2.
             # if 2, then we have todo_refs and a comment.
@@ -287,7 +297,8 @@ class DbRow(object):
         row_text += (reviewer_output + ' ' +
                      (' ' * (EMAIL_COL_WIDTH - len(reviewer_output) - 1)))
 
-        # refs, with commas (short hashes?)
+        # each todo ref will be the FIRST 10 of a hash. always len 10.
+        # refs, with commas
         for tr in self.__todo_refs:
             row_text += (tr + ',')
 

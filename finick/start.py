@@ -28,7 +28,8 @@ def start_session():
     db_handle = db_integrity_check_open(finick_config)
 
     if None != db_handle:
-        assignments, todos = db_open_session(finick_config, db_handle)
+        # return value is a SessionRowPrinter
+        assignments = db_open_session(finick_config, db_handle)
 
         # if there are no assignments for whoami, then we are done! (we can still commit changes to DB file)
 

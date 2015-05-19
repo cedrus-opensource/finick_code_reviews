@@ -5,11 +5,13 @@ from __future__ import absolute_import
 
 import finicky.gitting
 from finicky.db_row import DbRow
+from finicky.session_row_printer import SessionRowPrinter
 from finicky.error import FinickError
 from finicky.basics import _
 
 import os
 from io import open
+import copy
 
 
 class _DbRowsCollection(object):
@@ -35,6 +37,52 @@ class _DbRowsCollection(object):
 
     def contains_this_commit(self, commithash_str):
         return commithash_str in self.__lookupmap
+
+    def _configured_strategy_says_to_assign_this_row(self, finick_config,
+                                                     dbrow):
+        # todo: implement a variety of assignment strategies/policies
+
+        # for now, assign anything that wasn't authored by the reviewer:
+        return dbrow.committer != finick_config.reviewer
+
+    def find_then_mark_then_return_assignments(self, finick_config):
+        # changing assigned items from TYPE_WAIT to TYPE_NOW
+        results = []
+
+        for r in self.__rows:
+            if r.row_type == r.TYPE_WAIT:
+                if self._configured_strategy_says_to_assign_this_row(
+                    finick_config, r):
+                    r.assign_for_current_review_session(finick_config.reviewer)
+                    # make a deep copy, so that nothing that edits assignments can edit our __rows:
+                    results.append(copy.deepcopy(r))
+
+        return results
+
+    def find_todos_and_please_requests(self, email_of_debtor):
+        # we need to care about TYPE_TODO and TYPE_PLS.
+        # find rows of those types where the *committer* is the same as current session driver
+        rough_results = []
+        cancelled_hashes = []
+
+        for r in self.__rows:
+            if r.row_type == r.TYPE_TODO or r.row_type == r.TYPE_PLS:
+                for_me = r.committer == email_of_debtor
+                if for_me:
+                    rough_results.append(copy.deepcopy(r))
+
+            elif r.row_type == r.TYPE_TFIX or r.row_type == r.TYPE_PFIX:
+                # each todo ref should be length 10
+                cancelled_hashes += r.todo_refs
+
+        results = []
+
+        for r in rough_results:
+            # we expect the todo refs to always be length 10
+            if r.commithash[0:10] not in cancelled_hashes:
+                results.append(r)
+
+        return results
 
     def add_new_commits(self, incoming_rows):
         # incoming_rows is a list of DbRow objects.
@@ -302,15 +350,18 @@ class DbTextFile(object):
 
         incoming_rows = None  # we MUST not mutate the rows from here onward!
 
-    def generate_assignments_for_this_session(self):
+    def generate_assignments_for_this_session(self, finick_config):
 
-        # return a tuple of assignments? (undecided what the structure of an assignment is)
-        pass
+        # changing assigned items from TYPE_WAIT to TYPE_NOW
+        return self.__rowcollection.find_then_mark_then_return_assignments(
+            finick_config)
 
-    def generate_todos_for_this_session(self):
+    def generate_todos_for_this_session(self, finick_config):
 
-        # return a tuple of todos? (undecided what the structure of an todo is)
-        pass
+        # we need to care about TYPE_TODO and TYPE_PLS.
+        # find rows of those types where the *committer* is the same as current session driver
+        return self.__rowcollection.find_todos_and_please_requests(
+            finick_config.reviewer)
 
 
 def db_integrity_check_open(finick_config):
@@ -345,11 +396,13 @@ def db_open_session(finick_config, db_handle):
     db_handle.purge_older_reviewed_commits()
     db_handle.add_new_commits()
 
-    assignments = db_handle.generate_assignments_for_this_session()
+    assignments = db_handle.generate_assignments_for_this_session(finick_config)
 
-    todos = db_handle.generate_todos_for_this_session()
+    todos_n_pleases = db_handle.generate_todos_for_this_session(finick_config)
 
     # do this AFTER generating assignments, so the 'NOW' markers can show up
     db_handle.flush_back_to_disk()
 
-    return assignments, todos
+    wrapper_helper = SessionRowPrinter(finick_config, assignments,
+                                       todos_n_pleases)
+    return wrapper_helper
