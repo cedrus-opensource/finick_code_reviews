@@ -12,6 +12,40 @@ import os
 from io import open
 
 
+class _DbRowsCollection(object):
+    def __init__(self):
+        self.__rows = []
+
+    def is_empty(self):
+        return len(self.__rows) == 0
+
+    def mark_last_row_as_forefront(self, linetext):
+        self.__rows[len(self.__rows) - 1].set_forefront_marker(linetext)
+
+    def append_drow(self, drow):
+        # todo: assert type DbRow
+        self.__rows.append(drow)
+
+    def write_to_diskfile(self, text_file):
+        # the_file is expected to be a TextIOBase (from io)
+        for r in self.__rows:
+            r.write_to_diskfile(text_file)
+
+    def add_new_commits(self, incoming_rows):
+        # incoming_rows is a list of DbRow objects.
+        # IMPORTANT: 'incoming_rows' is NOT JUST new content. it is EXPECTED to overlap with current content in __rows
+
+        if self.is_empty():
+            pass  # read from an empty file, so incorporate all new commits
+        else:
+            pass
+            # work backwards through incoming_rows, looking for one that overlaps with __rows.
+            # if we never find any overlap, report an error. (conflict between WeeksTilPurge, BeginningOfTime, or something?)
+            # once we find an overlap, sanity-check that all further incoming_rows overlap with __rows. otherwise report
+            # a sanity-check failure.
+            # finally, append the NON-overlapping stuff from incoming_rows, preserving order.
+
+
 def AssertType_DbTextFile(o):
     rhs = DbTextFile.dummyinstance()
     incoming_type = str(type(o))
@@ -43,7 +77,7 @@ class DbTextFile(object):
         self.__finick_config = None
         self.__is_ok = False
         self.__version_from_fileread = -1  # later code RELIES on this -1 as a flag
-        self.__rows = []
+        self.__rowcollection = _DbRowsCollection()
 
         if False == is_dummy:
             self._initialize_from_file(finick_config, is_session_starting)
@@ -121,12 +155,12 @@ class DbTextFile(object):
                             file_comments_waiting = linetext
 
                         elif is_forefrontmark:
-                            if len(self.__rows) == 0:
+                            if self.__rowcollection.is_empty():
                                 print(
                                     'Warning: found a forefront marker without any preceding row to attach it to.')
                             else:
-                                self.__rows[len(self.__rows) -
-                                            1].set_forefront_marker(linetext)
+                                self.__rowcollection.mark_last_row_as_forefront(
+                                    linetext)
 
                         else:
                             if self.__version_from_fileread == -1:
@@ -142,7 +176,7 @@ class DbTextFile(object):
                                     'The session is not yet fully initialized. Therefore, we cannot have \'NOW\' rows.'
                                     'Bad row: ' + linetext)
 
-                            self.__rows.append(drow)
+                            self.__rowcollection.append_drow(drow)
 
                     # if we made it this far without exceptions:
                     is_ok = True
@@ -157,7 +191,7 @@ class DbTextFile(object):
                 err_msg += 'While using config \'' + configfile + '\', you must have the DB file \'' + expected_db + '\''
                 raise FinickError(err_msg)
 
-        if len(self.__rows) == 0:
+        if self.__rowcollection.is_empty():
             # if we got here with no exceptions, but the __rows list is empty,
             # then we must have gotten an empty (fresh new) file.
             # in that case, we may as well say the file is in 'our version' format:
@@ -191,8 +225,7 @@ class DbTextFile(object):
         # (first line should always be file version info).
         text_file.write(self.__CURR_VERSION_STRING + '\n')
 
-        for r in self.__rows:
-            r.write_to_diskfile(text_file)
+        self.__rowcollection.write_to_diskfile(text_file)
 
         text_file.close()
 
