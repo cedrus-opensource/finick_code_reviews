@@ -281,8 +281,8 @@ def git_retrieve_history(finick_config):
                 commit_is_hidden = True
                 reason_to_hide = 'finick-driven automated commit excluded from review'
 
-        list_of_tuples.append(
-            (commit_pretty, commit_is_hidden, reason_to_hide))
+        list_of_tuples.insert(
+            0, (commit_pretty, commit_is_hidden, reason_to_hide))
 
     return list_of_tuples
 
