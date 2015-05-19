@@ -93,6 +93,8 @@ class DbRow(object):
 
     committer  = property(lambda s : s.__committer,  _fail_setter)
 
+    comment    = property(lambda s : s.__action_comment, _fail_setter)
+
     commithash = property(lambda s : s.__commit_hash, _fail_setter)
 
     # yapf: enable

@@ -7,7 +7,7 @@ from __future__ import absolute_import
 
 from finicky.basics import prelaunch_checklist_open, _
 from finicky.gitting import git_establish_session_readiness
-from finicky.db_file import db_integrity_check_open, db_open_session
+from finicky.db_file import db_integrity_check_open, db_preopen_session, db_open_session, db_close_session_nothing_to_review
 from finicky.error import FinickError
 
 import os
@@ -29,9 +29,16 @@ def start_session():
 
     if None != db_handle:
         # return value is a SessionRowPrinter
-        assignments = db_open_session(finick_config, db_handle)
+        assignments = db_preopen_session(finick_config, db_handle)
 
-        # if there are no assignments for whoami, then we are done! (we can still commit changes to DB file)
+        assignments.print_reminders()
+
+        if assignments.nothing_to_review():
+            # if there are no assignments for whoami, then we are done! (we can still commit changes to DB file)
+            db_close_session_nothing_to_review(finick_config, db_handle)
+        else:
+            assignments.print_assignments()
+            db_open_session(finick_config, db_handle)
 
 
 start_session()

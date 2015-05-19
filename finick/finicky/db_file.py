@@ -386,7 +386,7 @@ def _db_integrity_check(finick_config, is_session_starting):
         return None
 
 
-def db_open_session(finick_config, db_handle):
+def db_preopen_session(finick_config, db_handle):
 
     finicky.parse_config.AssertType_FinickConfig(finick_config)
     AssertType_DbTextFile(db_handle)
@@ -400,9 +400,18 @@ def db_open_session(finick_config, db_handle):
 
     todos_n_pleases = db_handle.generate_todos_for_this_session(finick_config)
 
-    # do this AFTER generating assignments, so the 'NOW' markers can show up
-    db_handle.flush_back_to_disk()
-
     wrapper_helper = SessionRowPrinter(finick_config, assignments,
                                        todos_n_pleases)
     return wrapper_helper
+
+
+def db_close_session_nothing_to_review(finick_config, db_handle):
+
+    # when this is called there shouldn't be any NOW rows. no NOW markers to remove, right?
+    db_handle.flush_back_to_disk()
+
+
+def db_open_session(finick_config, db_handle):
+
+    # do this AFTER generating assignments, so the 'NOW' markers can show up
+    db_handle.flush_back_to_disk()
