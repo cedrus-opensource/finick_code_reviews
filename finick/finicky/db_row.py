@@ -34,13 +34,12 @@ class DbRow(object):
         self.__TYPE_OK   =  1  # reviewer approved/accepted the commit
         self.__TYPE_OOPS =  2  # reviewer rejected the commit
         self.__TYPE_WAIT =  3  # not yet reviewed. awaiting review.
-        self.__TYPE_TFIX =  4  # when a reviewer marks TFIX, this means both approval AND the commit closes a todo
+        self.__TYPE_FIXD =  4  # means both approval and the commit closes a PLS ('please' request) or a TODO
         self.__TYPE_TODO =  5  # reviewer defers the commit, contingent upon further items being addressed
         self.__TYPE_HIDE =  6  # a commit that is 'null' for reviewing purposes. hidden/excluded from the process.
         self.__TYPE_NOW  =  7  # assigned for review during the current active session
         self.__TYPE_PLS  =  8  # (short for 'please'). like todo, only we accept the commit, but with further requests for later.
-        self.__TYPE_PFIX =  9  # means both approval and the commit closes a PLS ('please' request)
-        self.__TYPE_RVRT = 10  # a revert/reversal that is accepted and addresses a prior OOPS
+        self.__TYPE_RVRT =  9  # a revert/reversal that is accepted and addresses a prior OOPS
         # yapf: enable
 
         self.__creator = ''  # this variable is intended only for debugging/tracing
@@ -75,7 +74,7 @@ class DbRow(object):
 
     TYPE_WAIT  = property(lambda s : s.__TYPE_WAIT,  _fail_setter)
 
-    TYPE_TFIX  = property(lambda s : s.__TYPE_TFIX,  _fail_setter)
+    TYPE_FIXD  = property(lambda s : s.__TYPE_FIXD,  _fail_setter)
 
     TYPE_TODO  = property(lambda s : s.__TYPE_TODO,  _fail_setter)
 
@@ -84,8 +83,6 @@ class DbRow(object):
     TYPE_NOW   = property(lambda s : s.__TYPE_NOW,   _fail_setter)
 
     TYPE_PLS   = property(lambda s : s.__TYPE_PLS,   _fail_setter)
-
-    TYPE_PFIX  = property(lambda s : s.__TYPE_PFIX,  _fail_setter)
 
     TYPE_RVRT  = property(lambda s : s.__TYPE_RVRT,  _fail_setter)
 
@@ -108,7 +105,7 @@ class DbRow(object):
         """
         jdoe@cedrus.com    f6cc7699fb362c2777c474f3416ce0abb2c083fe   HIDE  nobody                # this is a reversal of commit xxxxxx
         jdoe@cedrus.com    7b660c3a473225f49c73e51c7b8af61e139990a0   NOW
-        jdoe@cedrus.com    2228add0186febf3471914c861b3b06fd0eb8dbc   TFIX  abc@cedrus.com  ecfb335633  # good fix for todo
+        jdoe@cedrus.com    2228add0186febf3471914c861b3b06fd0eb8dbc   FIXD  abc@cedrus.com  ecfb335633  # good fix for todo
 
         TYPE_HIDE HIDE is for things that were reversals, and for this:
         CommitStringMaintWithoutSession=Cedrus_Automated_Maintenance_Commit
@@ -218,8 +215,8 @@ class DbRow(object):
             return 'OOPS'
         elif rowtype_int == self.__TYPE_WAIT:
             return 'WAIT'
-        elif rowtype_int == self.__TYPE_TFIX:
-            return 'TFIX'
+        elif rowtype_int == self.__TYPE_FIXD:
+            return 'FIXD'
         elif rowtype_int == self.__TYPE_TODO:
             return 'TODO'
         elif rowtype_int == self.__TYPE_HIDE:
@@ -228,8 +225,6 @@ class DbRow(object):
             return 'NOW'
         elif rowtype_int == self.__TYPE_PLS:
             return 'PLS'
-        elif rowtype_int == self.__TYPE_PFIX:
-            return 'PFIX'
         elif rowtype_int == self.__TYPE_RVRT:
             return 'RVRT'
         else:
@@ -243,8 +238,8 @@ class DbRow(object):
             return self.__TYPE_OOPS
         elif rowtype_string == 'WAIT':
             return self.__TYPE_WAIT
-        elif rowtype_string == 'TFIX':
-            return self.__TYPE_TFIX
+        elif rowtype_string == 'FIXD':
+            return self.__TYPE_FIXD
         elif rowtype_string == 'TODO':
             return self.__TYPE_TODO
         elif rowtype_string == 'HIDE':
@@ -253,8 +248,6 @@ class DbRow(object):
             return self.__TYPE_NOW
         elif rowtype_string == 'PLS':
             return self.__TYPE_PLS
-        elif rowtype_string == 'PFIX':
-            return self.__TYPE_PFIX
         elif rowtype_string == 'RVRT':
             return self.__TYPE_RVRT
         else:

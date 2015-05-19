@@ -71,7 +71,7 @@ class _DbRowsCollection(object):
                 if for_me:
                     rough_results.append(copy.deepcopy(r))
 
-            elif r.row_type == r.TYPE_TFIX or r.row_type == r.TYPE_PFIX:
+            elif r.row_type == r.TYPE_FIXD:
                 # each todo ref should be length 10
                 cancelled_hashes += r.todo_refs
 
