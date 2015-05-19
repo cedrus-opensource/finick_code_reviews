@@ -1,17 +1,44 @@
-jdoe@cedrus.com    3656e55fd36b8b0d8586e57ea87674a0e70ad251   OK    bla@cedrus.com
-jdoe@cedrus.com    ecfb3356338c0e3b6c7381ee1091ae37aa4c8f75   OK    bla@cedrus.com
+jane.d@cedrus.com          65ec92904bd6579369739e6da7fd3aedd9cf4d04   2015-03-31_11:45:06   OK     jdoe@cedrus.com
+jane.d@cedrus.com          ecf58b21588c0e3b6c73813e1091ae37aa4c8f75   2015-03-31_11:50:36   OK     jdoe@cedrus.com            # excellent work
 ##__forefront__## YYYY-MM-DD HH:MM:SS
-jdoe@cedrus.com    4355bfb59e9e1b13a8cee4ffd0bd7ea4e2ee226d   WAIT  nobody
-jdoe@cedrus.com    ebc8afae56a47ab37080be1e3946cf9c91226383   NOW
-jdoe@cedrus.com    2228add0186febf3471914c861b3b06fd0eb8dbc   NOW
-jdoe@cedrus.com    3656e55fd36b8b0d8586e57ea87674a0e70ad251   OK    bla@cedrus.com
-jdoe@cedrus.com    ecfb3356338c0e3b6c7381ee1091ae37aa4c8f75   OK    bla@cedrus.com
-jdoe@cedrus.com    ecfb3356338c0e3b6c7381ee1091ae37aa4c8f75   TODO  bla@cedrus.com        # need to rename 'x' to 'y'
-jdoe@cedrus.com    d414990ed72c1990fc1d609b175973742d049c6d   NOW
-jdoe@cedrus.com    0071e7bf69d63da4bdba958a95a80f430af92b48   OOPS  crit@cedrus.com
-jdoe@cedrus.com    f6cc7699fb362c2777c474f3416ce0abb2c083fe   HIDE  nobody                # this is a reversal of commit xxxxxx
-jdoe@cedrus.com    7b660c3a473225f49c73e51c7b8af61e139990a0   NOW
-jdoe@cedrus.com    2228add0186febf3471914c861b3b06fd0eb8dbc   TFIX  abc@cedrus.com  ecfb335633  # good fix for todo
+jdoe@cedrus.com            ab3eb5beb68cf71b7fafda21341c1d0393da53e0   2015-03-30_19:13:55   WAIT
+jdoe@cedrus.com            dc8a280b0463fc443b8a3c51d4051cb66a01cce7   2015-03-30_19:14:17   HIDE   ..nobody..                 # auto merge commit. no diff available for review.
+jdoe@cedrus.com            47e20a37341be1541feb2117d1bf1b82f8a04ab3   2015-03-31_11:04:27   WAIT
+jdoe@cedrus.com            e4d35ac13a76aaf3eba952ef587ef2b2d5802639   2015-03-31_11:21:11   WAIT
+jane.d@cedrus.com          67fece586ebf29009c8fd3f5af0519c7a0f87ef0   2015-03-31_11:45:11   HIDE   ..nobody..                 # auto merge commit. no diff available for review.
+jdoe@cedrus.com            418d5d4d7b70594b7cf2dc385c5828ac921bdd3d   2015-03-31_13:26:29   WAIT
+jane.d@cedrus.com          ebc8afae21a47ab37080be1e3946cf9c91226383   2015-03-31_12:59:39   WAIT
+jane.d@cedrus.com          3621ea0fd36b8bc38586e57ea87674a0e70c3251   2015-03-31_12:59:39   OOPS   jdoe@cedrus.com            # we have to revert this
+jane.d@cedrus.com          72cf4bf2d3621b02a6d759b1a2f5b4342ce39f1e   2015-03-31_12:59:39   NOW    jdoe@cedrus.com
+jdoe@cedrus.com            c36dd9cedf58c41dd1d3e1e8dcbda3d3c754c748   2015-04-03_18:24:15   WAIT
+; an example of a single-line file comment. maximum of one consecutive comment line.
+jdoe@cedrus.com            0071e7bfffd63da4bdba958a95a80f430af92b48   2015-04-06_11:34:55   WAIT
+dudey@cedrus.com           63a4530735ca0efbf0f850a5972fea87f366002a   2015-04-06_11:34:55   TODO   bbla@com                   # you need to fix a typo
+; Note: this is the exact point at which we migrated to our new CI server. 
+jdoe@cedrus.com            d518c183e247f9d99b49582073ec4a71f99659f3   2015-04-06_14:41:46   WAIT
+jdoe@cedrus.com            b832b064448fba12ec2da07e0165b0ba1c09c646   2015-04-06_14:43:46   WAIT
+; marked next row as a hide to force-hide it. this was a manual edit. sorry!
+jdoe@cedrus.com            7890a4d1709602e1d5c358a19611aa78e271e523   2015-04-06_14:50:41   HIDE
+jdoe@cedrus.com            4ecb117cefdd28d59e87473744580eaa909ce6c7   2015-04-06_15:06:30   WAIT
+jdoe@cedrus.com            bd39d462116d2768a5a534c1d085f0a5f9694fe0   2015-04-06_15:07:44   TODO   c@edu                      # add error check for file permission
+jdoe@cedrus.com            07ed5c792162a0340b49657570141b7a80e858ed   2015-04-06_15:10:21   WAIT
+jdoe@cedrus.com            8fd7c2cc2a0365c3d26ac60af7f9cbfa0092134b   2015-04-06_15:29:39   WAIT
+jdoe@cedrus.com            e0001a8d43e638308b20ca6a320ba1523bd957fa   2015-04-07_09:30:31   WAIT
+jdoe@cedrus.com            2228c3d0186febf3471941c861b3b06fd0eb8dbc   2015-04-07_09:30:31   TODO   x@com                      # asdlgkjsdkgkd
+jdoe@cedrus.com            eb1a79c83e90425e787c3f141c396abf8371a822   2015-04-07_10:17:39   WAIT
+xxxxx@cedrus.com           5d9cc875a79a0046c3a395cd6afda3046067da2d   2015-04-07_14:05:54   TODO   five@me                    # sdk alg gjasjgie x0949 gs j3 23jt
+jdoe@cedrus.com            616316ac33a2d0bdf9650e2dd46ea472b2ba963a   2015-04-07_14:15:54   WAIT
+jdoe@cedrus.com            d73e5c26d706f25370bf7593415958fa6d46626e   2015-04-07_14:32:37   PLS    o@o.om                     # won't you please
+jdoe@cedrus.com            058d7d3f119541958de8da441a58f305b1911c66   2015-04-07_15:13:19   WAIT
+jdoe@cedrus.com            21aa7ba25215434d92f1726ab0e67b3df6abd182   2015-04-07_18:07:40   PLS    x@x.com                    # dkgjsdgk
+jdoe@cedrus.com            a1e58b1810bdb7e81e9a750079322402e39e9f58   2015-04-08_11:18:41   WAIT
+jdoe@cedrus.com            b61cf11528d5794c13b9c6072546c35719ded3e4   2015-04-08_16:36:53   WAIT
+jdoe@cedrus.com            47a08a8322f3b98fbfbf9dc609d58a0017593072   2015-04-08_16:21:52   FIXD   app@roval.me               2228c3d018,21aa7ba252, # good fix for todo
+jdoe@cedrus.com            9224cae94a0f20c85ec342472c221c0aa974b5f6   2015-04-09_11:19:39   WAIT
+jdoe@cedrus.com            c300132c9a65c39d43531bacd024274d7ed17c36   2015-04-09_12:04:21   WAIT
+
+
+
 
 
 OK (to accept)
@@ -20,20 +47,18 @@ OOPS (to reject)
 
 WAIT (needs a review)
 
-TFIX (implies both OK *and* closes a TODO)
+FIXD (implies both OK *and* closes a TODO or a PLS)
 
+TODO (this *blocks* the forefront marker from moving beyond it. the todo requires a fix.)
+
+RVRT (a commit that reverted an OOPS commit)
+
+PLS (this does *not* block the forefront. this is a request for some nice-to-have thing)
+
+NOW (assigned for review in current session)
 
 HIDE (this is 'null' for reviewing purposes)
-
-
-NOW (assigned)
-
 
 HIDE is for things that were reversals, and for this:
 CommitStringMaintWithoutSession=Cedrus_Automated_Maintenance_Commit
 
-
-
-
-todos:
-jdoe@cedrus.com    ecfb3356338c0e3b6c7381ee1091ae37aa4c8f75   TODO  bla@cedrus.com     # need to rename 'x' to 'y'
