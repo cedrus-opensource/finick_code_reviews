@@ -170,6 +170,7 @@ def git_retrieve_history(finick_config):
     so you have an idea about what the git output that is being parsed here looks like raw:
 
     git log --topo-order --numstat --date=local  --pretty=format:\"commit %H$%ae$%aD$%s\"  --since=1427763600
+    (Note: we are no longer using the DOLLAR SIGN for the delim. Now it is char \b)
 
     commit rrc084e4x88b74rx38e1x4e88db53575ec4cd15d$deva@acmecorp.com$Thu, 14 Jan 1999 13:43:32 -0700$Merge branch 'ABC.0' of github.com:acmecorp/Acmeproject into ABC.0
     commit 8bc1c6xe1750b7bc789x00b8ee619718rc7ecx11$devb@acmecorp.com$Thu, 14 Jan 1999 12:56:43 -0700$Removing the questionable bandaid from the minimal element class, making sublists a subclass of it. Minimal_BBElement is still a work in progress.
@@ -196,15 +197,16 @@ def git_retrieve_history(finick_config):
     """
 
     SEP_TOKEN = 'commit '
+    # warning: knowledge about using '\b\ as the delim is duplicated in db_row.py
     COL_DELIM = '\b'  # note: if a commit message contains this, then beware!
 
     # do NOT exclude merges! merges often deserve review.
     # see: http://haacked.com/archive/2014/02/21/reviewing-merge-commits/
     # use %aD to guarantee parsing by strptime.
     results = _git_exec_and_return_stdout(
-        'git log --topo-order --numstat --date=local  --pretty=format:\"' + SEP_TOKEN + '%H'
-        + COL_DELIM + '%ae' + COL_DELIM + '%aD' + COL_DELIM + '%s\"  --since='
-        + str(
+        'git log --topo-order --numstat --date=local  --pretty=format:\"' +
+        SEP_TOKEN + '%H' + COL_DELIM + '%ae' + COL_DELIM + '%aD' + COL_DELIM +
+        '%s\"  --since=' + str(
             finick_config.startepoch), finick_config.repopath)
 
     # the first one (results[0]) will still have SEP_TOKEN on the front of it
