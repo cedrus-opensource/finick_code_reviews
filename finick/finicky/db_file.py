@@ -15,6 +15,7 @@ from io import open
 class _DbRowsCollection(object):
     def __init__(self):
         self.__rows = []
+        self.__lookupmap = {}
 
     def is_empty(self):
         return len(self.__rows) == 0
@@ -25,25 +26,65 @@ class _DbRowsCollection(object):
     def append_drow(self, drow):
         # todo: assert type DbRow
         self.__rows.append(drow)
+        self.__lookupmap[drow.commithash] = drow
 
     def write_to_diskfile(self, text_file):
         # the_file is expected to be a TextIOBase (from io)
         for r in self.__rows:
             r.write_to_diskfile(text_file)
 
+    def contains_this_commit(self, commithash_str):
+        return commithash_str in self.__lookupmap
+
     def add_new_commits(self, incoming_rows):
         # incoming_rows is a list of DbRow objects.
         # IMPORTANT: 'incoming_rows' is NOT JUST new content. it is EXPECTED to overlap with current content in __rows
 
         if self.is_empty():
-            pass  # read from an empty file, so incorporate all new commits
+            # we must have initially read from an empty file, so now we incorporate *all* incoming commits
+            for ir in incoming_rows:
+                self.append_drow(ir)
         else:
-            pass
             # work backwards through incoming_rows, looking for one that overlaps with __rows.
             # if we never find any overlap, report an error. (conflict between WeeksTilPurge, BeginningOfTime, or something?)
             # once we find an overlap, sanity-check that all further incoming_rows overlap with __rows. otherwise report
             # a sanity-check failure.
             # finally, append the NON-overlapping stuff from incoming_rows, preserving order.
+
+            newrows_i = len(incoming_rows) - 1
+            matched_at = -1
+
+            # IMPORTANT: 'incoming_rows' is NOT JUST new content. it
+            # is EXPECTED to overlap with current content in __rows
+            while newrows_i >= 0:
+                if self.__rows[len(self.__rows) -
+                               1].commithash == incoming_rows[newrows_i].commithash:
+                    matched_at = newrows_i
+                    break
+
+                newrows_i -= 1
+
+            if matched_at == -1:
+                raise FinickError(
+                    'Unable to find where incoming commits line up with existing commit '
+                    + self.__rows[len(self.__rows) - 1].commithash)
+
+            # keep going, for further sanity check:
+            while newrows_i >= 0:
+
+                if not self.contains_this_commit(
+                    incoming_rows[newrows_i].commithash):
+                    raise FinickError(
+                        'Incoming commits contain commit hashes not known to our prior history! Example: '
+                        + incoming_rows[newrows_i].commithash)
+
+                newrows_i -= 1
+
+            # we made it through sanity checking. now go back to the overlap spot:
+            newrows_i = matched_at + 1
+            while newrows_i < len(incoming_rows):
+                self.append_drow(incoming_rows[newrows_i])
+                newrows_i += 1
 
 
 def AssertType_DbTextFile(o):
@@ -237,7 +278,29 @@ class DbTextFile(object):
 
     def add_new_commits(self):
 
-        pass
+        # self.__rowcollection is a list holding DbRow objects
+        if self.__version_from_fileread == -1:
+            raise FinickError(
+                'You are expected to read and parse a file before calling add_new_commits')
+
+        # nice-to-have: pass in something more recent (some appropriate commit hash), so that
+        # git log doesn't have to go back to the 'BeginningOfTime' each time.
+        # the commit must be chosen carefully. when we have 2+ diverging paths in the git
+        # history that have not yet merged back together, we do NOT want to pick a commit
+        # from during that diverged part of history.
+        commits = finicky.gitting.git_retrieve_history(self.__finick_config)
+
+        incoming_rows = []
+
+        for c in commits:
+            drow = DbRow.create_from_gitting_tuple(c)
+            incoming_rows.append(drow)
+
+        # we are TRANSFERING ownership of incoming_rows. do NOT use
+        # incoming_rows further after passing it to __rowcollection
+        self.__rowcollection.add_new_commits(incoming_rows)
+
+        incoming_rows = None  # we MUST not mutate the rows from here onward!
 
     def generate_assignments_for_this_session(self):
 
