@@ -39,9 +39,10 @@ class DbTextFile(object):
         # the prefix before 'finick_code_reviews' is to make sure this would be INVALID if read as an email address
         self.__CURR_VERSION_STRING = '@:..finick_code_reviews db_file v0.00'
 
+        self.__file_location = ''
         self.__finick_config = None
         self.__is_ok = False
-        self.__version_from_fileread = -1
+        self.__version_from_fileread = -1  # later code RELIES on this -1 as a flag
         self.__rows = []
 
         if False == is_dummy:
@@ -86,6 +87,9 @@ class DbTextFile(object):
 
             try:
                 with open(expected_db, encoding='utf-8') as f:
+                    # it opened without exception, so store this location for later file-save operations:
+                    self.__file_location = expected_db
+
                     file_comments_waiting = ''
 
                     for line in f:
@@ -181,12 +185,21 @@ class DbTextFile(object):
                 'It seems we incremented __CURR_FILE_VER without a plan to upgrade older files!'
                 ' Add implementation here, please!')
 
+        # mode 'w' will TRUNCATE the file
+        text_file = open(self.__file_location, encoding='utf-8', mode='w')
+
         # (first line should always be file version info).
-        pass
+        text_file.write(self.__CURR_VERSION_STRING + '\n')
+
+        for r in self.__rows:
+            r.write_to_diskfile(text_file)
+
+        text_file.close()
 
     def purge_older_reviewed_commits(self):
 
-        # TODO
+        # TODO. will use WeeksTilPurge setting from the ini.
+        # (however, anything NEWER than the 'forefront' must be kept no matter what)
         pass
 
     def add_new_commits(self):
