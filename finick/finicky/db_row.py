@@ -91,6 +91,8 @@ class DbRow(object):
 
     row_type   = property(lambda s : s.__rowtype,    _fail_setter)
 
+    commithash = property(lambda s : s.__commit_hash, _fail_setter)
+
     # yapf: enable
 
     def _initialize_from_string(self, string_to_parse):
@@ -177,6 +179,8 @@ class DbRow(object):
 
         if wants_to_hide:
             self.__rowtype = self.__TYPE_HIDE
+        else:
+            self.__rowtype = self.__TYPE_WAIT
 
         # we expect 'date_string' to be in RFC2822 style
         # Tue, 2 Feb 2010 22:22:56 +0000
