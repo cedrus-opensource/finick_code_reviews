@@ -29,8 +29,7 @@ def _dec_assign_to_globals(F):
     return wrapper
 
 
-@_dec_assign_to_globals
-def git_establish_session_readiness(finick_config):
+def _git_establish_session_readiness(finick_config, is_session_starting):
 
     finicky.parse_config.AssertType_FinickConfig(finick_config)
 
@@ -47,10 +46,12 @@ def git_establish_session_readiness(finick_config):
     if results.rstrip() != finick_config.branch:
         raise FinickError(
             "Unable to start code-review session. Could not check out the required git branch.")
-    """
-    we might consider adding this to the 'git pull' if submodule actions are causing slow down.
 
-       --[no-]recurse-submodules[=yes|on-demand|no]
+    if is_session_starting:
+        """
+        we might consider adding this to the 'git pull' if submodule actions are causing slow down.
+
+        --[no-]recurse-submodules[=yes|on-demand|no]
 
            This option controls if new commits of all populated
            submodules should be fetched too (see git-config(1) and
@@ -60,10 +61,10 @@ def git_establish_session_readiness(finick_config):
            checked out in the submodule,'git submodule update' has to
            be called afterwards to bring the work tree up to date with
            the merge result.
-    """
-    _git_exec_and_return_stdout(
-        'git pull ' + _quietness + ' origin ' + finick_config.branch,
-        finick_config.repopath)
+           """
+        _git_exec_and_return_stdout(
+            'git pull ' + _quietness + ' origin ' + finick_config.branch,
+            finick_config.repopath)
 
     # if we are starting one session, there must not be any other session in progress (even from other INI file)
     # check for a currently-open, in-progress review session.
@@ -72,6 +73,18 @@ def git_establish_session_readiness(finick_config):
 
     # for now, either an exception was thrown, or else all went well:
     return True
+
+
+@_dec_assign_to_globals
+def git_establish_session_readiness_end(finick_config):
+    return _git_establish_session_readiness(finick_config,
+                                            is_session_starting=False)
+
+
+@_dec_assign_to_globals
+def git_establish_session_readiness_start(finick_config):
+    return _git_establish_session_readiness(finick_config,
+                                            is_session_starting=True)
 
 
 @_dec_assign_to_globals
@@ -317,6 +330,15 @@ def _git_commit_and_push(finick_config, commit_note1, commit_note2):
     _git_push(finick_config)
 
 
+def _git_stage_the_edited_db(finick_config):
+    finicky.parse_config.AssertType_FinickConfig(finick_config)
+
+    the_db = finick_config.get_db_file_fullname_fullpath()
+
+    # unlike other calls, we do _NOT_ use repopath for the shell call dir
+    _git_exec_and_return_stdout('git add ' + the_db, finick_config.confdir)
+
+
 @_dec_assign_to_globals
 def git_perform_maintenance_commit(finick_config):
     finicky.parse_config.AssertType_FinickConfig(finick_config)
@@ -348,13 +370,26 @@ def git_perform_maintenance_commit(finick_config):
 def git_perform_sessionstart_commit(finick_config):
     finicky.parse_config.AssertType_FinickConfig(finick_config)
 
-    the_db = finick_config.get_db_file_fullname_fullpath()
-
-    # unlike other calls, we do _NOT_ use repopath for the shell call dir
-    _git_exec_and_return_stdout('git add ' + the_db, finick_config.confdir)
+    _git_stage_the_edited_db(finick_config)
 
     commit_note1 = finick_config.str_start
     commit_note2 = 'reviewer: ' + finick_config.reviewer
+
+    # the git add succeeds even if 'the_db' had no changes to be staged.
+    # when that happens, the git commit will fail.
+    # THAT SHOULD NOT HAPPEN HERE. we only start a session if there WERE new assignments.
+    _git_commit_and_push(finick_config, commit_note1, commit_note2)
+
+
+@_dec_assign_to_globals
+def git_perform_session_completion_commit(finick_config, work_count):
+    finicky.parse_config.AssertType_FinickConfig(finick_config)
+
+    _git_stage_the_edited_db(finick_config)
+
+    commit_note1 = finick_config.str_finish
+    commit_note2 = 'reviewer: ' + finick_config.reviewer + ' '
+    commit_note2 += 'reviewed ' + str(work_count) + ' commits'
 
     # the git add succeeds even if 'the_db' had no changes to be staged.
     # when that happens, the git commit will fail.

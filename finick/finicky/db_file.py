@@ -446,7 +446,7 @@ def db_preopen_session(finick_config, db_handle):
     finicky.parse_config.AssertType_FinickConfig(finick_config)
     AssertType_DbTextFile(db_handle)
 
-    # if we are starting one session, there must not be any other session in progress (even from other INI file) [job of git_establish_session_readiness]
+    # if we are starting one session, there must not be any other session in progress (even from other INI file) [job of git_establish_session_readiness_start]
 
     db_handle.purge_older_reviewed_commits()
     db_handle.add_new_commits()
@@ -495,6 +495,9 @@ def db_merge_with_completed_assignments(finick_config, db_handle):
     # we can leave the on-disk assignments file alone. user might want to keep it.
 
     # commit session-end message
+    finicky.gitting.git_perform_session_completion_commit(finick_config,
+                                                          work_count)
+
     # push all to origin reviews branch
     # push whatever possible to zero branch
     # send email (email to remind todo items. todo items past certain date?)

@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 
 from finicky.basics import prelaunch_checklist_close
+from finicky.gitting import git_establish_session_readiness_end
 from finicky.db_file import db_integrity_check_close, db_merge_with_completed_assignments
 
 import os
@@ -23,6 +24,10 @@ def finish_session():
 
     if False == finick_config.is_ok:
         raise FinickError("unable to parse the config/ini file")
+
+    # basic sanity checks for being in the right repo and right branch, etc:
+    if True != git_establish_session_readiness_end(finick_config):
+        raise FinickError("unable to establish git readiness")
 
     # is a session in progress?
 
