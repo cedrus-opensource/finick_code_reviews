@@ -410,8 +410,12 @@ def db_close_session_nothing_to_review(finick_config, db_handle):
     # when this is called there shouldn't be any NOW rows. no NOW markers to remove, right?
     db_handle.flush_back_to_disk()
 
+    finicky.gitting.git_perform_maintenance_commit(finick_config)
+
 
 def db_open_session(finick_config, db_handle):
 
     # do this AFTER generating assignments, so the 'NOW' markers can show up
     db_handle.flush_back_to_disk()
+
+    finicky.gitting.git_perform_sessionstart_commit(finick_config)
