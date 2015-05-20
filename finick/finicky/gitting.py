@@ -303,6 +303,20 @@ def _git_current_user_email(finick_config):
     finick_config.reviewer = results
 
 
+def _git_push(finick_config):
+    _git_exec_and_return_stdout(
+        'git push ' + _quietness + ' origin ' + finick_config.branch,
+        finick_config.repopath)
+
+
+def _git_commit_and_push(finick_config, commit_note1, commit_note2):
+    _git_exec_and_return_stdout(
+        'git commit -m \"' + commit_note1 + '\" -m \"' + commit_note2 + '\"',
+        finick_config.repopath)
+
+    _git_push(finick_config)
+
+
 @_dec_assign_to_globals
 def git_perform_maintenance_commit(finick_config):
     finicky.parse_config.AssertType_FinickConfig(finick_config)
@@ -327,9 +341,7 @@ def git_perform_maintenance_commit(finick_config):
         print('Warning: unable to complete a maintenance commit.')
 
     if c_success:
-        _git_exec_and_return_stdout(
-            'git push ' + _quietness + ' origin ' + finick_config.branch,
-            finick_config.repopath)
+        _git_push(finick_config)
 
 
 @_dec_assign_to_globals
@@ -347,13 +359,7 @@ def git_perform_sessionstart_commit(finick_config):
     # the git add succeeds even if 'the_db' had no changes to be staged.
     # when that happens, the git commit will fail.
     # THAT SHOULD NOT HAPPEN HERE. we only start a session if there WERE new assignments.
-    _git_exec_and_return_stdout(
-        'git commit -m \"' + commit_note1 + '\" -m \"' + commit_note2 + '\"',
-        finick_config.repopath)
-
-    _git_exec_and_return_stdout(
-        'git push ' + _quietness + ' origin ' + finick_config.branch,
-        finick_config.repopath)
+    _git_commit_and_push(finick_config, commit_note1, commit_note2)
 
 
 def _git_exec_and_return_stdout(command_string, repo_path):
