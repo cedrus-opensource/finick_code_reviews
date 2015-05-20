@@ -18,6 +18,7 @@ class _DbRowsCollection(object):
     def __init__(self):
         self.__rows = []
         self.__lookupmap = {}
+        self.__lookup_size_10 = {}
 
     def is_empty(self):
         return len(self.__rows) == 0
@@ -29,6 +30,7 @@ class _DbRowsCollection(object):
         # todo: assert type DbRow
         self.__rows.append(drow)
         self.__lookupmap[drow.commithash] = drow
+        self.__lookup_size_10[drow.commithash[0:10]] = drow
 
     def write_to_diskfile(self, text_file):
         # the_file is expected to be a TextIOBase (from io)
@@ -134,10 +136,19 @@ class _DbRowsCollection(object):
                 self.append_drow(incoming_rows[newrows_i])
                 newrows_i += 1
 
+    def short_commithash_is_known_in_collection(self, commithash_str):
+        if len(commithash_str) != 10:
+            raise FinickError(
+                'The short_commithash lookup function only takes length-10 strings.')
+
+        return commithash_str in self.__lookup_size_10
+
     def merge_completed_assignments(self, assign_file):
         AssertType_DbTextFile(assign_file)
 
         assign_rows = assign_file._DbTextFile__rowcollection._DbRowsCollection__rows
+
+        work_count = 0
 
         for ar in assign_rows:
             try:
@@ -150,10 +161,16 @@ class _DbRowsCollection(object):
             # now we work with 'our_row' and 'ar'
 
             # if 'ar' is still in row_type 'NOW', then put it back to 'WAIT'
-
             # other valid values for ar type: OK, FIXD, TODO, PLS, OOPS
+            if ar.row_type != ar.TYPE_OOPS:
+                work_count += our_row.merge_with_completed_assignment_all_cases_except_OOPS(
+                    ar, self.short_commithash_is_known_in_collection)
 
-            # OOPS is the tricky case. we try a clean revert. if it fails, we use TODO instead
+            else:
+                # OOPS is the tricky case. we try a clean revert. if it fails, we use TODO instead
+                pass
+
+        return work_count
 
 
 def AssertType_DbTextFile(o):
@@ -397,7 +414,7 @@ class DbTextFile(object):
 
     def merge_completed_assignments(self, assign_file):
 
-        self.__rowcollection.merge_completed_assignments(assign_file)
+        return self.__rowcollection.merge_completed_assignments(assign_file)
 
 
 def db_integrity_check_open(finick_config):
@@ -469,19 +486,15 @@ def db_merge_with_completed_assignments(finick_config, db_handle):
     if not assign_fhandle.is_ok:
         raise FinickError('Failed to parse the completed assignments file.')
 
-    db_handle.merge_completed_assignments(assign_fhandle)
+    work_count = db_handle.merge_completed_assignments(assign_fhandle)
 
     # mark ##__forefront__## position in reviews file
 
-    #db_handle.flush_back_to_disk()
+    db_handle.flush_back_to_disk()
 
     # we can leave the on-disk assignments file alone. user might want to keep it.
 
-
-def db_close_completed_assignments_session(finick_config, db_handle):
     # commit session-end message
     # push all to origin reviews branch
     # push whatever possible to zero branch
     # send email (email to remind todo items. todo items past certain date?)
-
-    pass

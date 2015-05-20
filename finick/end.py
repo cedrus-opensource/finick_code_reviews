@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 
 from finicky.basics import prelaunch_checklist_close
-from finicky.db_file import db_integrity_check_close, db_merge_with_completed_assignments, db_close_completed_assignments_session
+from finicky.db_file import db_integrity_check_close, db_merge_with_completed_assignments
 
 import os
 """
@@ -32,10 +32,8 @@ def finish_session():
     db_handle = db_integrity_check_close(finick_config)
 
     if None != db_handle:
+        # when the next call completes exception-free, it also closes the session:
         db_merge_with_completed_assignments(finick_config, db_handle)
-
-        # if we made it here exception-free:
-        db_close_completed_assignments_session(finick_config, db_handle)
 
 
 finish_session()

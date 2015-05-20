@@ -102,6 +102,96 @@ class DbRow(object):
         self.__rowtype = self.__TYPE_NOW
         self.__reviewer = reviewer_email
 
+    def cancel_assignment_for_current_review_session(self):
+        self.__rowtype = self.__TYPE_WAIT
+        self.__reviewer = ''
+
+    def _store_incoming_todo_refs(self, assignment_row, ref_checker_func):
+        # here we enforce that there is at least one valid todo-ref.
+        # also, we make the todo-refs all be exactly length 10 strings.
+        # lastly, replace self.__todo_refs with these len-10 strings.
+        if len(assignment_row._DbRow__todo_refs) < 1:
+            raise FinickError(
+                'Assignment row ' + assignment_row.commithash +
+                ' is missing todo-refs (hashes referencing '
+                'earlier commits).')
+
+        for tr in assignment_row._DbRow__todo_refs:
+            if len(tr) < 10:
+                raise FinickError(
+                    'Todo-ref ' + tr + ' on assignment row ' +
+                    assignment_row.commithash + ' is not length-10 or longer.')
+
+            # look up tr and make sure it refers to a KNOWN commit
+            if False == ref_checker_func(tr[0:10]):
+                raise FinickError(
+                    'On assignment row ' + assignment_row.commithash +
+                    ', invalid todo-ref: ' + tr)
+
+        # clip to length 10 and assign using list comprehension:
+        self.__todo_refs = [i[0:10] for i in assignment_row._DbRow__todo_refs]
+
+    def merge_with_completed_assignment_all_cases_except_OOPS(
+        self, assignment_row, ref_checker_func
+    ):
+        # if 'ar' is still in row_type 'NOW', then put it back to 'WAIT'
+        # other valid values for ar type: OK, FIXD, TODO, PLS, OOPS.
+        # (currently, this function explicitly refuses to handle OOPS)
+
+        work_count = 1
+
+        if self.__reviewer == '':
+            print(
+                'Warning: db disk file showed NO reviewer email for a row that was assigned.')
+
+        if self.__reviewer != assignment_row._DbRow__reviewer:
+            print(
+                'Warning: the assignments file changed the reviewer email that was originally the assigned reviewer.')
+
+        incoming_reviewer = assignment_row._DbRow__reviewer.rstrip().lstrip()
+        if len(incoming_reviewer) == 0:
+            incoming_reviewer = self.__reviewer
+
+        # for brevity:
+        ar = assignment_row
+
+        if ar.row_type == ar.TYPE_NOW or ar.row_type == ar.TYPE_WAIT:
+            work_count = 0
+            self.cancel_assignment_for_current_review_session()
+
+        elif ar.row_type == ar.TYPE_OK:
+            self.__rowtype = self.TYPE_OK
+            self.__reviewer = incoming_reviewer
+            self.__action_comment = ar._DbRow__action_comment
+
+        elif ar.row_type == ar.TYPE_FIXD:
+            # Note: FIXD rows are required to have at least one valid todo-ref
+            self._store_incoming_todo_refs(ar, ref_checker_func
+                                           )  # this might throw an exception
+            self.__rowtype = self.TYPE_FIXD
+            self.__reviewer = incoming_reviewer
+            self.__action_comment = ar._DbRow__action_comment
+
+        elif ar.row_type == ar.TYPE_TODO or ar.row_type == ar.TYPE_PLS:
+            if len(ar._DbRow__action_comment) < 3:
+                raise FinickError(
+                    'Assignment ' + ar.commithash + ' was marked type ' +
+                    self._convert_rowtype_constant_to_string(
+                        ar.row_type) + ' but it is missing a helpful comment!')
+            self.__rowtype = ar.row_type
+            self.__reviewer = incoming_reviewer
+            self.__action_comment = ar._DbRow__action_comment
+
+        elif ar.row_type == ar.TYPE_OOPS:
+            raise FinickError(
+                'You must not pass OOPS-typed assignments to this \'merge\' function.')
+
+        else:
+            raise FinickError(
+                'Invalid completed assignment row type. (Needed NOW, WAIT, OK, FIXD, TODO, or PLS.)')
+
+        return work_count
+
     def _initialize_from_string(self, string_to_parse):
         """
         jdoe@cedrus.com    f6cc7699fb362c2777c474f3416ce0abb2c083fe   HIDE  nobody                # this is a reversal of commit xxxxxx
