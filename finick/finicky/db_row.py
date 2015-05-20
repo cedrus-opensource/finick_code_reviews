@@ -18,6 +18,10 @@ class DbRow(object):
         # our tuples come directly from git output. so there is never a file_comment
         return cls(False, '', '', gitt_tuple)
 
+    @classmethod
+    def _create_from_internal_map(cls, the_map):
+        return cls(False, '', '', None, the_map)
+
     def _fail_setter(self, value):
         raise FinickError(
             "The value you are trying to assign to in DbRow is read-only.")
@@ -25,7 +29,8 @@ class DbRow(object):
     def __init__(self, is_dummy,
                  string_to_parse='',
                  file_comment='',
-                 gitt_tuple=None):
+                 gitt_tuple=None,
+                 internal_map=None):
 
         self.__ACTION_COMMENT_CHAR = '#'
 
@@ -61,6 +66,9 @@ class DbRow(object):
         if gitt_tuple is not None:
             self.__creator = 'create_from_gitting_tuple'
             self._initialize_from_tuple(gitt_tuple)
+        elif internal_map is not None:
+            self.__creator = '_create_from_internal_map'
+            self._initialize_from_map(internal_map)
         elif False == is_dummy:
             self.__creator = 'create_from_string'
             self._initialize_from_string(string_to_parse)
@@ -110,13 +118,13 @@ class DbRow(object):
         # here we enforce that there is at least one valid todo-ref.
         # also, we make the todo-refs all be exactly length 10 strings.
         # lastly, replace self.__todo_refs with these len-10 strings.
-        if len(assignment_row._DbRow__todo_refs) < 1:
+        if len(assignment_row.todo_refs) < 1:
             raise FinickError(
                 'Assignment row ' + assignment_row.commithash +
                 ' is missing todo-refs (hashes referencing '
                 'earlier commits).')
 
-        for tr in assignment_row._DbRow__todo_refs:
+        for tr in assignment_row.todo_refs:
             if len(tr) < 10:
                 raise FinickError(
                     'Todo-ref ' + tr + ' on assignment row ' +
@@ -129,7 +137,62 @@ class DbRow(object):
                     ', invalid todo-ref: ' + tr)
 
         # clip to length 10 and assign using list comprehension:
-        self.__todo_refs = [i[0:10] for i in assignment_row._DbRow__todo_refs]
+        self.__todo_refs = [i[0:10] for i in assignment_row.todo_refs]
+
+    def throw_exception_if_bad_actioncomment(self):
+        if len(self.comment) < 3:
+            raise FinickError(
+                'Row ' + self.commithash + ' was marked type ' +
+                self._convert_rowtype_constant_to_string(
+                    self.row_type) + ' but it is missing a helpful comment!')
+
+    def _choose_between_our_reviewer_string_and_ar(self, assignment_row):
+        rslt_reviewer = assignment_row._DbRow__reviewer.rstrip().lstrip()
+        if len(rslt_reviewer) == 0:
+            rslt_reviewer = self.__reviewer
+
+        return rslt_reviewer
+
+    def _merge_TODO_private_helper(self, ar, incoming_reviewer):
+        if not (ar.row_type == ar.TYPE_TODO or ar.row_type == ar.TYPE_PLS):
+            raise FinickError(
+                'Function misuse. Only call into here with a row of type TODO or PLS.')
+
+        ar.throw_exception_if_bad_actioncomment()
+        self.__rowtype = ar.row_type
+        self.__reviewer = incoming_reviewer
+        self.__action_comment = ar.comment
+
+    def merge_OOPS_row(self, assignment_row, reverthash, reason_to_hide,
+                       git_driver_email):
+        # if reverthash is '', then the revert failed. we create a TODO instead.
+        # otherwise, mark our OOPS and also return the _NEW_ RVRT ROW
+        new_row = None
+
+        incoming_reviewer = self._choose_between_our_reviewer_string_and_ar(
+            assignment_row)
+
+        if reverthash == '':
+            # revert failed. make the OOPS a TODO instead.
+            assignment_row._DbRow__rowtype = assignment_row.TYPE_TODO
+            self._merge_TODO_private_helper(assignment_row, incoming_reviewer)
+        else:
+            self.__rowtype = self.TYPE_OOPS
+            self.__reviewer = incoming_reviewer
+            self.__action_comment = assignment_row.comment
+
+            the_map = {
+                '__committer': git_driver_email,
+                '__commit_hash': reverthash,
+                '__rowtype': self.__TYPE_RVRT,
+                '__reviewer': incoming_reviewer,
+                '__todo_refs': [self.__commit_hash[0:10]],
+                '__action_comment': reason_to_hide
+            }
+
+            new_row = DbRow._create_from_internal_map(the_map)
+
+        return new_row
 
     def merge_with_completed_assignment_all_cases_except_OOPS(
         self, assignment_row, ref_checker_func
@@ -148,9 +211,8 @@ class DbRow(object):
             print(
                 'Warning: the assignments file changed the reviewer email that was originally the assigned reviewer.')
 
-        incoming_reviewer = assignment_row._DbRow__reviewer.rstrip().lstrip()
-        if len(incoming_reviewer) == 0:
-            incoming_reviewer = self.__reviewer
+        incoming_reviewer = self._choose_between_our_reviewer_string_and_ar(
+            assignment_row)
 
         # for brevity:
         ar = assignment_row
@@ -162,7 +224,7 @@ class DbRow(object):
         elif ar.row_type == ar.TYPE_OK:
             self.__rowtype = self.TYPE_OK
             self.__reviewer = incoming_reviewer
-            self.__action_comment = ar._DbRow__action_comment
+            self.__action_comment = ar.comment
 
         elif ar.row_type == ar.TYPE_FIXD:
             # Note: FIXD rows are required to have at least one valid todo-ref
@@ -170,17 +232,10 @@ class DbRow(object):
                                            )  # this might throw an exception
             self.__rowtype = self.TYPE_FIXD
             self.__reviewer = incoming_reviewer
-            self.__action_comment = ar._DbRow__action_comment
+            self.__action_comment = ar.comment
 
         elif ar.row_type == ar.TYPE_TODO or ar.row_type == ar.TYPE_PLS:
-            if len(ar._DbRow__action_comment) < 3:
-                raise FinickError(
-                    'Assignment ' + ar.commithash + ' was marked type ' +
-                    self._convert_rowtype_constant_to_string(
-                        ar.row_type) + ' but it is missing a helpful comment!')
-            self.__rowtype = ar.row_type
-            self.__reviewer = incoming_reviewer
-            self.__action_comment = ar._DbRow__action_comment
+            self._merge_TODO_private_helper(ar, incoming_reviewer)
 
         elif ar.row_type == ar.TYPE_OOPS:
             raise FinickError(
@@ -298,6 +353,19 @@ class DbRow(object):
         # see comments in gitting.py about our timezone issues. again,
         # for now, date strings are just a 'courtesy', not hard data.
         self.__commit_datestr = date_obj.strftime("%Y-%m-%d_%H:%M:%S")
+
+    def _initialize_from_map(self, internal_map):
+        """
+            the_map = {'__committer': git_driver_email,
+                       '__commit_hash': reverthash,
+                       '__rowtype': self.__TYPE_RVRT,
+                       '__reviewer': incoming_reviewer,
+                       '__todo_refs':[self.__commit_hash[0:10]],
+                       '__action_comment':reason_to_hide}
+                       """
+
+        # we have to handle our today's date
+        self.__commit_datestr = ''
 
     def set_forefront_marker(self, forefront_marker_string):
         if self.__forefront_string != '':

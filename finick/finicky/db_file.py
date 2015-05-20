@@ -148,7 +148,7 @@ class _DbRowsCollection(object):
 
         return commithash_str in self.__lookup_size_10
 
-    def merge_completed_assignments(self, assign_file):
+    def merge_completed_assignments(self, assign_file, finick_config):
         AssertType_DbTextFile(assign_file)
 
         assign_rows = assign_file._DbTextFile__rowcollection._DbRowsCollection__rows
@@ -171,9 +171,31 @@ class _DbRowsCollection(object):
                 work_count += our_row.merge_with_completed_assignment_all_cases_except_OOPS(
                     ar, self.short_commithash_is_known_in_collection)
 
+            elif ar.row_type == ar.TYPE_OOPS:
+                # OOPS is the tricky case. we try a clean revert. if it fails, we use TODO instead.
+                # returns the commit hash of the revert-commit if it succeeds, else ''
+
+                # make sure we have a comment BEFORE we invoke any git commands:
+                ar.throw_exception_if_bad_actioncomment()
+
+                reverthash, reason_to_hide = finicky.gitting.git_best_effort_to_commit_a_revert(
+                    finick_config, ar.commithash, ar.comment)
+
+                # the merge function will decide (based on reverthash) whether to merge as TODO or OOPS
+                new_row = our_row.merge_OOPS_row(ar, reverthash,
+                                                 reason_to_hide,
+                                                 finick_config.reviewer)
+
+                if None != new_row:
+                    # if the merge returned a new row, then add it
+                    self.append_drow(new_row)
+
+                # either way (as OOPS or as TODO), this was one review:
+                work_count += 1
+
             else:
-                # OOPS is the tricky case. we try a clean revert. if it fails, we use TODO instead
-                pass
+                raise FinickError(
+                    'Invalid incoming assignment row type while trying to merge completed assignments.')
 
         return work_count
 
@@ -423,7 +445,9 @@ class DbTextFile(object):
 
     def merge_completed_assignments(self, assign_file):
 
-        return self.__rowcollection.merge_completed_assignments(assign_file)
+        # note: the rows from assignments might be mutated after this call:
+        return self.__rowcollection.merge_completed_assignments(
+            assign_file, self.__finick_config)
 
 
 def db_integrity_check_open(finick_config):
@@ -495,6 +519,7 @@ def db_merge_with_completed_assignments(finick_config, db_handle):
     if not assign_fhandle.is_ok:
         raise FinickError('Failed to parse the completed assignments file.')
 
+    # note: the rows from assignments might be mutated after this call:
     work_count = db_handle.merge_completed_assignments(assign_fhandle)
 
     # mark ##__forefront__## position in reviews file

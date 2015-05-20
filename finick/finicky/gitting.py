@@ -412,6 +412,15 @@ def git_perform_session_abort_commit(finick_config):
     _git_commit_and_push(finick_config, commit_note1, commit_note2)
 
 
+@_dec_assign_to_globals
+def git_best_effort_to_commit_a_revert(finick_config, hash_to_revert, comment):
+    # returns (reverthash, reason_to_hide)
+    reverthash = ''
+    reason_to_hide = ''
+
+    return reverthash, reason_to_hide
+
+
 def _git_exec_and_return_stdout(command_string, repo_path):
 
     git_output = ''
