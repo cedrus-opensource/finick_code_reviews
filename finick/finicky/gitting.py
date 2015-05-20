@@ -397,6 +397,21 @@ def git_perform_session_completion_commit(finick_config, work_count):
     _git_commit_and_push(finick_config, commit_note1, commit_note2)
 
 
+@_dec_assign_to_globals
+def git_perform_session_abort_commit(finick_config):
+    finicky.parse_config.AssertType_FinickConfig(finick_config)
+
+    _git_stage_the_edited_db(finick_config)
+
+    commit_note1 = finick_config.str_abort
+    commit_note2 = 'reviewer: ' + finick_config.reviewer
+
+    # the git add succeeds even if 'the_db' had no changes to be staged.
+    # when that happens, the git commit will fail.
+    # THAT SHOULD NOT HAPPEN HERE. we only start a session if there WERE new assignments.
+    _git_commit_and_push(finick_config, commit_note1, commit_note2)
+
+
 def _git_exec_and_return_stdout(command_string, repo_path):
 
     git_output = ''

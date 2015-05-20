@@ -61,6 +61,11 @@ class _DbRowsCollection(object):
 
         return results
 
+    def find_then_reverse_assignments(self, finick_config):
+        for r in self.__rows:
+            if r.row_type == r.TYPE_NOW:
+                r.cancel_assignment_for_current_review_session()
+
     def find_todos_and_please_requests(self, email_of_debtor):
         # we need to care about TYPE_TODO and TYPE_PLS.
         # find rows of those types where the *committer* is the same as current session driver
@@ -399,6 +404,10 @@ class DbTextFile(object):
 
         incoming_rows = None  # we MUST not mutate the rows from here onward!
 
+    def abort_current_assignments(self, finick_config):
+
+        return self.__rowcollection.find_then_reverse_assignments(finick_config)
+
     def generate_assignments_for_this_session(self, finick_config):
 
         # changing assigned items from TYPE_WAIT to TYPE_NOW
@@ -494,10 +503,21 @@ def db_merge_with_completed_assignments(finick_config, db_handle):
 
     # we can leave the on-disk assignments file alone. user might want to keep it.
 
-    # commit session-end message
+    # commit session-end message, push all to origin reviews branch
     finicky.gitting.git_perform_session_completion_commit(finick_config,
                                                           work_count)
 
-    # push all to origin reviews branch
     # push whatever possible to zero branch
     # send email (email to remind todo items. todo items past certain date?)
+
+
+def db_abort_current_assignments(finick_config, db_handle):
+
+    db_handle.abort_current_assignments(finick_config)
+
+    db_handle.flush_back_to_disk()
+
+    # we can leave the on-disk assignments file alone. user might want to keep it.
+
+    # commit session-abort message, push all to origin reviews branch
+    finicky.gitting.git_perform_session_abort_commit(finick_config)
