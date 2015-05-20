@@ -184,7 +184,7 @@ class DbTextFile(object):
 
         # before we check the content of the file, we should check whether it is known (committed) to git
 
-        expected_db = finick_config.confdir + os.sep + finick_config.configname + '.txt'
+        expected_db = finick_config.get_db_file_fullname_fullpath()
 
         db_found = os.path.isfile(expected_db)
         db_committed = False

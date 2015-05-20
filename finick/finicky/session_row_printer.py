@@ -6,7 +6,6 @@ from __future__ import absolute_import
 from finicky.db_row import DbRow
 from finicky.error import FinickError
 
-import os
 import datetime
 from io import open
 
@@ -60,10 +59,7 @@ class SessionRowPrinter(object):
             if True:
                 o += '\n'
 
-            todos_file = 'todos.'
-            todos_file += self.__finick_config.configname
-            todos_file += '.txt'
-            todos_file = self.__finick_config.confdir + os.sep + todos_file
+            todos_file = self.__finick_config.get_todos_file_fullname_fullpath()
 
             # show the user the text right away (via the print function), and then also save to a file.
             print(o)
@@ -81,10 +77,7 @@ class SessionRowPrinter(object):
             text_file.close()
 
     def print_assignments(self):
-        assign_file = 'assignments.'
-        assign_file += self.__finick_config.configname
-        assign_file += '.txt'
-        assign_file = self.__finick_config.confdir + os.sep + assign_file
+        assign_file = self.__finick_config.get_assign_file_fullname_fullpath()
 
         # mode 'w' will TRUNCATE the file
         text_file = open(assign_file, encoding='utf-8', mode='w')

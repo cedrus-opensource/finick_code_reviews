@@ -103,6 +103,23 @@ class FinickConfig(object):
 
     # yapf: enable
 
+    def _get_file_fullname_fullpath_by_our_name(self, prefix_string):
+        result = prefix_string + '.'
+        result += self.configname
+        result += '.txt'
+        result = self.confdir + os.sep + result
+
+        return result
+
+    def get_db_file_fullname_fullpath(self):
+        return self.confdir + os.sep + self.configname + '.txt'
+
+    def get_todos_file_fullname_fullpath(self):
+        return self._get_file_fullname_fullpath_by_our_name('todos')
+
+    def get_assign_file_fullname_fullpath(self):
+        return self._get_file_fullname_fullpath_by_our_name('assignments')
+
     def _initialize_from_file(self, file_location):
 
         cf = configparser.ConfigParser()
