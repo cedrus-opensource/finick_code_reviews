@@ -153,17 +153,24 @@ class DbRow(object):
 
         # each todo ref will be the FIRST 10 of a hash. always len 10.
         if len_of_row_parts >= 6:
+            comma_sep = ','  # this is duplicated in write_to_diskfile
+
             # we now can have either 1 more value or 2.
             # if 2, then we have todo_refs and a comment.
             # if 1, then it could be EITHER todo_refs or a comment
             if len_of_row_parts == 7:
-                self.__todo_refs = row_parts[5].split(',')
+                self.__todo_refs = row_parts[5].split(comma_sep)
                 self.__action_comment = row_parts[6]
             else:
                 if row_parts[5].startswith(self.__ACTION_COMMENT_CHAR):
                     self.__action_comment = row_parts[5]
                 else:
-                    self.__todo_refs = row_parts[5].split(',')
+                    self.__todo_refs = row_parts[5].split(comma_sep)
+
+            # if the comma separated list also ENDED in a final comma, we a get a spurious extra item
+            if len(self.__todo_refs) > 0 and self.__todo_refs[len(
+                self.__todo_refs) - 1] == '':
+                self.__todo_refs.pop()
 
     def _initialize_from_tuple(self, gitt_tuple):
         # the tuple came from gitting.git_retrieve_history.
@@ -291,12 +298,16 @@ class DbRow(object):
         row_text += (reviewer_output + ' ' +
                      (' ' * (EMAIL_COL_WIDTH - len(reviewer_output) - 1)))
 
+        comma_sep = ','  # this is duplicated in _initialize_from_string
+
         # each todo ref will be the FIRST 10 of a hash. always len 10.
         # refs, with commas
         for tr in self.__todo_refs:
-            row_text += (tr + ',')
+            row_text += (tr + comma_sep)  # we remove the final comma next!
 
         if len(self.__todo_refs) > 0:
+            # remove the trailing comma:
+            row_text = row_text.rstrip(comma_sep)
             row_text += ('   ')
 
         # note: in order to have a comment, we MUST have a reviewer! even if the reviewer is '..nobody..'
