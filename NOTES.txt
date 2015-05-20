@@ -1,0 +1,44 @@
+
+In some brand-new folder on your computer (outside of any folders currently under git control),
+clone the finick_code_reviews git repository. check out the master branch.
+
+
+In your *other* preexisting project (whichever one needs code reviews), do the following:
+
+Somewhere in your other project's repo, create a subfolder called something like "code_reviews" (you choose the name)
+
+Note: i will use MY_PROJ to denote the name of your project (which is probably also the name of your repo).
+
+MY_PROJ does not have to match the name of repository. MY_PROJ is "what you call your work" that is under review.
+
+in the "code_reviews" subfolder:
+
+1. create a blank (empty) file named MY_PROJ_reviews.txt (extension txt)
+
+2. check MY_PROJ_reviews.txt into git in your repo.
+
+3. create a file named MY_PROJ_reviews.ini (extension ini)
+
+4. for starting out, make MY_PROJ_reviews.ini contain the same content as:
+
+https://github.com/cedrus-opensource/finick_code_reviews/blob/master/sample.reviews.ini
+
+5. edit the values of your MY_PROJ_reviews.ini so that they make sense for your project.
+
+6. check the MY_PROJ_reviews.ini into your git repo.
+
+Note: if you cloned finick_code_reviews into a folder named finick_code_reviews (the git clone default behavior),
+then you will have a folder "finick_code_reviews/finick/" that (among other things) contains start.py
+
+7. in your code_reviews subfolder, create a symlink to "finick_code_reviews/finick/"
+
+At this point, the following should be possible:
+
+$ cd code_reviews
+$ ./finick/start.py # you do not necessary want to run this yet. the path is here to explain file layout.
+
+(if you did just run start.py, then you can run abort.py to abort the review session, if it started successfully)
+
+8. you should add code_reviews/finick to the .gitignore for your repo.
+
+
