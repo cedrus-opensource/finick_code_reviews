@@ -64,7 +64,6 @@ class DbRow(object):
         elif False == is_dummy:
             self.__creator = 'create_from_string'
             self._initialize_from_string(string_to_parse)
-            pass
 
     # yapf: disable
 
