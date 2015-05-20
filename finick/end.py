@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 
 from finicky.basics import prelaunch_checklist_close
+from finicky.db_file import db_integrity_check_close, db_merge_with_completed_assignments, db_close_completed_assignments_session
 
 import os
 """
@@ -18,26 +19,23 @@ In that case the tagged zero-forefront should not advance.
 
 def finish_session():
 
-    prelaunch_checklist_close(os.path.basename(__file__))
+    finick_config = prelaunch_checklist_close(os.path.basename(__file__))
+
+    if False == finick_config.is_ok:
+        raise FinickError("unable to parse the config/ini file")
 
     # is a session in progress?
 
     # reviews file integrity check.
     # reviews file should now be properly upgraded already.
     # first line in DB file should be file version info
+    db_handle = db_integrity_check_close(finick_config)
 
-    # assignments file integrity check.
+    if None != db_handle:
+        db_merge_with_completed_assignments(finick_config, db_handle)
 
-    # handle reverts.
-    # merge assignment results into reviews DB file
-    # mark ##__forefront__## position in reviews file
-
-    # assignments file should be empty
-
-    # commit session-end message
-    # push all to origin reviews branch
-    # push whatever possible to zero branch
-    # send email (email to remind todo items. todo items past certain date?)
+        # if we made it here exception-free:
+        db_close_completed_assignments_session(finick_config, db_handle)
 
 
 finish_session()

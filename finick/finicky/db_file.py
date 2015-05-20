@@ -134,6 +134,27 @@ class _DbRowsCollection(object):
                 self.append_drow(incoming_rows[newrows_i])
                 newrows_i += 1
 
+    def merge_completed_assignments(self, assign_file):
+        AssertType_DbTextFile(assign_file)
+
+        assign_rows = assign_file._DbTextFile__rowcollection._DbRowsCollection__rows
+
+        for ar in assign_rows:
+            try:
+                our_row = self.__lookupmap[ar.commithash]
+            except KeyError:
+                raise FinickError(
+                    'In assignment file, unrecognized commit hash: ' +
+                    ar.commithash)
+
+            # now we work with 'our_row' and 'ar'
+
+            # if 'ar' is still in row_type 'NOW', then put it back to 'WAIT'
+
+            # other valid values for ar type: OK, FIXD, TODO, PLS, OOPS
+
+            # OOPS is the tricky case. we try a clean revert. if it fails, we use TODO instead
+
 
 def AssertType_DbTextFile(o):
     rhs = DbTextFile.dummyinstance()
@@ -146,8 +167,10 @@ def AssertType_DbTextFile(o):
 
 class DbTextFile(object):
     @classmethod
-    def create_from_file(cls, finick_config, is_session_starting):
-        return cls(False, finick_config, is_session_starting)
+    def create_from_file(cls, finick_config, filename_w_fullpath,
+                         is_session_starting):
+        return cls(False, finick_config, filename_w_fullpath,
+                   is_session_starting)
 
     @classmethod
     def dummyinstance(cls):
@@ -155,6 +178,7 @@ class DbTextFile(object):
 
     def __init__(self, is_dummy,
                  finick_config=None,
+                 filename_w_fullpath='',
                  is_session_starting=False):
 
         # if some on a team need to keep older file format, this will need to be configurable:
@@ -169,7 +193,8 @@ class DbTextFile(object):
         self.__rowcollection = _DbRowsCollection()
 
         if False == is_dummy:
-            self._initialize_from_file(finick_config, is_session_starting)
+            self._initialize_from_file(finick_config, filename_w_fullpath,
+                                       is_session_starting)
             pass
 
     def _fail_setter(self, value):
@@ -178,28 +203,35 @@ class DbTextFile(object):
 
     is_ok = property(lambda s: s.__is_ok, _fail_setter)
 
-    def _initialize_from_file(self, finick_config, is_session_starting):
+    def _initialize_from_file(self, finick_config, filename_w_fullpath,
+                              is_session_starting):
 
         finicky.parse_config.AssertType_FinickConfig(finick_config)
 
         # before we check the content of the file, we should check whether it is known (committed) to git
 
-        expected_db = finick_config.get_db_file_fullname_fullpath()
+        expected_db = filename_w_fullpath
 
         db_found = os.path.isfile(expected_db)
-        db_committed = False
+        db_commit_status_ok = False
         is_ok = False
 
         if not db_found:
             print(expected_db, 'not found')
         else:
-            db_committed = finicky.gitting.git_repo_contains_committed_file(
+            is_committed = finicky.gitting.git_repo_contains_committed_file(
                 finick_config, os.path.abspath(expected_db))
+            if filename_w_fullpath == finick_config.get_assign_file_fullname_fullpath(
+            ):
+                # the assignment file should be git-ignored. not committed:
+                db_commit_status_ok = not is_committed
+            else:
+                db_commit_status_ok = is_committed
 
-        if not db_committed:
+        if not db_commit_status_ok:
             print(expected_db, 'not committed')
 
-        if db_found and db_committed:
+        if db_found and db_commit_status_ok:
             # file could be empty. that would mean a brand-new file.
             # ignore blank lines. (blank after trimming whitespace from both ends).
             # the first line should be the version line. otherwise, assume 0.00 (or empty file).
@@ -363,6 +395,10 @@ class DbTextFile(object):
         return self.__rowcollection.find_todos_and_please_requests(
             finick_config.reviewer)
 
+    def merge_completed_assignments(self, assign_file):
+
+        self.__rowcollection.merge_completed_assignments(assign_file)
+
 
 def db_integrity_check_open(finick_config):
 
@@ -378,7 +414,9 @@ def db_integrity_check_close(finick_config):
 
 def _db_integrity_check(finick_config, is_session_starting):
 
-    db_handle = DbTextFile.create_from_file(finick_config, is_session_starting)
+    db_handle = DbTextFile.create_from_file(
+        finick_config, finick_config.get_db_file_fullname_fullpath(),
+        is_session_starting)
 
     if db_handle.is_ok:
         return db_handle
@@ -419,3 +457,31 @@ def db_open_session(finick_config, db_handle):
     db_handle.flush_back_to_disk()
 
     finicky.gitting.git_perform_sessionstart_commit(finick_config)
+
+
+def db_merge_with_completed_assignments(finick_config, db_handle):
+
+    # assignments file integrity check.
+    assign_fhandle = DbTextFile.create_from_file(
+        finick_config, finick_config.get_assign_file_fullname_fullpath(),
+        is_session_starting=False)
+
+    if not assign_fhandle.is_ok:
+        raise FinickError('Failed to parse the completed assignments file.')
+
+    db_handle.merge_completed_assignments(assign_fhandle)
+
+    # mark ##__forefront__## position in reviews file
+
+    #db_handle.flush_back_to_disk()
+
+    # we can leave the on-disk assignments file alone. user might want to keep it.
+
+
+def db_close_completed_assignments_session(finick_config, db_handle):
+    # commit session-end message
+    # push all to origin reviews branch
+    # push whatever possible to zero branch
+    # send email (email to remind todo items. todo items past certain date?)
+
+    pass
