@@ -39,6 +39,7 @@ class FinickConfig(object):
         self.__str_abort = ''
         self.__str_finish = ''
         self.__str_maint = ''
+        self.__str_rvrt = ''
         self.__verbose = -1
         self.__invoker_eml = ''
 
@@ -61,7 +62,8 @@ class FinickConfig(object):
         if (self.__str_start in the_string or
             self.__str_abort in the_string or
             self.__str_finish in the_string or
-            self.__str_maint in the_string):
+            self.__str_maint in the_string or
+            self.__str_rvrt in the_string):
             return True
         else:
             return False
@@ -69,7 +71,7 @@ class FinickConfig(object):
 
     def get_all_commit_strings(self):
         return [self.__str_start, self.__str_abort, self.__str_finish,
-                self.__str_maint]
+                self.__str_maint, self.__str_rvrt]
 
 
     # yapf: disable
@@ -95,6 +97,8 @@ class FinickConfig(object):
     str_finish = property(lambda s : s.__str_finish,    _fail_setter)
 
     str_maint  = property(lambda s : s.__str_maint,     _fail_setter)
+
+    str_rvrt   = property(lambda s : s.__str_rvrt,      _fail_setter)
 
     verbosity  = property(lambda s : s.__verbose,       _fail_setter)
 
@@ -136,6 +140,7 @@ class FinickConfig(object):
         self.__str_finish = cf.get('GitReviews', 'CommitStringFinishSession')
         self.__str_maint = cf.get('GitReviews',
                                   'CommitStringMaintWithoutSession')
+        self.__str_rvrt = cf.get('GitReviews', 'CommitStringAutoRevertOops')
         file_basename = os.path.basename(file_location)
         self.__config = os.path.splitext(file_basename)[0]
         location = os.path.dirname(file_location)

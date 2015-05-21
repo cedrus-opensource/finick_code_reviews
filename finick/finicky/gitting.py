@@ -13,6 +13,14 @@ from io import open
 
 _quietness = ''  # empty string means the ABSENCE of the quiet flag. absence means NO suppressed git stderr
 
+_REASON_STRING_MERGE_WITHOUT_DIFF = 'auto merge commit. no diff available for review.'
+
+_REASON_STRING_SUBMODULE_ONLY = 'no content changes to this repo. only re-pointing which commits submodules point to.'
+
+_REASON_STRING_FINICK_DRIVEN_COMMIT = 'finick-driven automated commit excluded from review'
+
+_REASON_STRING_FINICK_REVERT = 'finick-driven automated git-revert commit'
+
 
 def _dec_assign_to_globals(F):
     def wrapper(*args):
@@ -276,13 +284,13 @@ def git_retrieve_history(finick_config):
             if not non_auto:
                 # appears to be an auto-merge
                 commit_is_hidden = True
-                reason_to_hide = 'auto merge commit. no diff available for review.'
+                reason_to_hide = _REASON_STRING_MERGE_WITHOUT_DIFF
 
         elif nonempty_lines == submodule_lines:
             # all we had in this commit were submodule 'pointer' changes
             # (some projects might want these reviewed. make that an option later.)
             commit_is_hidden = True
-            reason_to_hide = 'no content changes to this repo. only re-pointing which commits submodules point to.'
+            reason_to_hide = _REASON_STRING_SUBMODULE_ONLY
 
         else:  # handle exclusions based on strings.
             parts = commit_pretty.split(COL_DELIM)
@@ -292,7 +300,7 @@ def git_retrieve_history(finick_config):
 
             if finick_config.contains_a_configurable_tool_string(parts[3]):
                 commit_is_hidden = True
-                reason_to_hide = 'finick-driven automated commit excluded from review'
+                reason_to_hide = _REASON_STRING_FINICK_DRIVEN_COMMIT
 
         list_of_tuples.insert(
             0, (commit_pretty, commit_is_hidden, reason_to_hide))
@@ -417,6 +425,44 @@ def git_best_effort_to_commit_a_revert(finick_config, hash_to_revert, comment):
     # returns (reverthash, reason_to_hide)
     reverthash = ''
     reason_to_hide = ''
+
+    reverted = False
+    in_case_of_failure = 'git reset --hard HEAD '
+
+    try:
+        # Note: there is no '-q' (quiet) option to pass to git revert
+        _git_exec_and_return_stdout('git revert -n ' + hash_to_revert,
+                                    finick_config.repopath)
+
+        reverted = True
+    except:
+        print('Warning: unable to do a clean revert of ' + hash_to_revert +
+              '. Will now do a ' + in_case_of_failure.rstrip())
+
+    if False == reverted:
+        _git_exec_and_return_stdout(in_case_of_failure, finick_config.repopath)
+    else:
+        # we succeeded in doing a revert. but we used '-n' (no-commit).
+        # so now we must do the commit.
+
+        commit_note1 = finick_config.str_rvrt
+        commit_note2 = 'revert of ' + hash_to_revert[0:
+                                                     10] + ' by reviewer: ' + finick_config.reviewer + ', '
+        commit_note2 += 'due to: ' + comment
+
+        _git_exec_and_return_stdout(
+            'git commit -m \"' + commit_note1 + '\" -m \"' + commit_note2 +
+            '\"', finick_config.repopath)
+
+        output = _git_exec_and_return_stdout(
+            'git log -1 --pretty=format:\"%H\"', finick_config.repopath)
+
+        if len(output) != 40:
+            raise FinickError(
+                'Unexpected output from the \'git log -1 ...\' command to retreive most recent commit hash.')
+
+        reverthash = output
+        reason_to_hide = _REASON_STRING_FINICK_REVERT
 
     return reverthash, reason_to_hide
 

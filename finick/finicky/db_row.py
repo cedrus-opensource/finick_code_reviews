@@ -352,7 +352,9 @@ class DbRow(object):
 
         # see comments in gitting.py about our timezone issues. again,
         # for now, date strings are just a 'courtesy', not hard data.
-        self.__commit_datestr = date_obj.strftime("%Y-%m-%d_%H:%M:%S")
+        self.__commit_datestr = date_obj.strftime(
+            "%Y-%m-%d_%H:%M:%S"
+        )  # format duplicated in _initialize_from_map
 
     def _initialize_from_map(self, internal_map):
         """
@@ -363,9 +365,22 @@ class DbRow(object):
                        '__todo_refs':[self.__commit_hash[0:10]],
                        '__action_comment':reason_to_hide}
                        """
-
         # we have to handle our today's date
-        self.__commit_datestr = ''
+        self.__commit_datestr = datetime.datetime.now().strftime(
+            "%Y-%m-%d_%H:%M:%S"
+        )  # format duplicated in _initialize_from_tuple
+
+        self.__committer = internal_map['__committer']
+        self.__commit_hash = internal_map['__commit_hash']
+        self.__rowtype = internal_map['__rowtype']
+        self.__reviewer = internal_map['__reviewer']
+        self.__todo_refs = internal_map['__todo_refs']
+        self.__action_comment = internal_map['__action_comment']
+
+        if len(self.__action_comment) > 0:
+            if False == self.__action_comment.startswith(
+                self.__ACTION_COMMENT_CHAR):
+                self.__action_comment = self.__ACTION_COMMENT_CHAR + ' ' + self.__action_comment
 
     def set_forefront_marker(self, forefront_marker_string):
         if self.__forefront_string != '':

@@ -32,6 +32,12 @@ class _DbRowsCollection(object):
         self.__lookupmap[drow.commithash] = drow
         self.__lookup_size_10[drow.commithash[0:10]] = drow
 
+    def prepend_drow(self, drow):
+        # todo: assert type DbRow
+        self.__rows.insert(0, drow)
+        self.__lookupmap[drow.commithash] = drow
+        self.__lookup_size_10[drow.commithash[0:10]] = drow
+
     def write_to_diskfile(self, text_file):
         # the_file is expected to be a TextIOBase (from io)
         for r in self.__rows:
@@ -155,6 +161,7 @@ class _DbRowsCollection(object):
 
         work_count = 0
 
+        # REMEMBER! we read in the completed assignments file backwards! newest commits first!
         for ar in assign_rows:
             try:
                 our_row = self.__lookupmap[ar.commithash]
@@ -217,13 +224,21 @@ class DbTextFile(object):
                    is_session_starting)
 
     @classmethod
+    def create_from_file_rows_reversed(cls, finick_config,
+                                       filename_w_fullpath):
+        return cls(False, finick_config, filename_w_fullpath,
+                   is_session_starting=False,
+                   reverse_the_rows=True)
+
+    @classmethod
     def dummyinstance(cls):
         return cls(True)
 
     def __init__(self, is_dummy,
                  finick_config=None,
                  filename_w_fullpath='',
-                 is_session_starting=False):
+                 is_session_starting=False,
+                 reverse_the_rows=False):
 
         # if some on a team need to keep older file format, this will need to be configurable:
         self.__CURR_FILE_VER = 0
@@ -238,7 +253,7 @@ class DbTextFile(object):
 
         if False == is_dummy:
             self._initialize_from_file(finick_config, filename_w_fullpath,
-                                       is_session_starting)
+                                       is_session_starting, reverse_the_rows)
             pass
 
     def _fail_setter(self, value):
@@ -248,7 +263,7 @@ class DbTextFile(object):
     is_ok = property(lambda s: s.__is_ok, _fail_setter)
 
     def _initialize_from_file(self, finick_config, filename_w_fullpath,
-                              is_session_starting):
+                              is_session_starting, reverse_the_rows):
 
         finicky.parse_config.AssertType_FinickConfig(finick_config)
 
@@ -341,7 +356,10 @@ class DbTextFile(object):
                                     'The session is not yet fully initialized. Therefore, we cannot have \'NOW\' rows.'
                                     'Bad row: ' + linetext)
 
-                            self.__rowcollection.append_drow(drow)
+                            if reverse_the_rows:
+                                self.__rowcollection.prepend_drow(drow)
+                            else:
+                                self.__rowcollection.append_drow(drow)
 
                     # if we made it this far without exceptions:
                     is_ok = True
@@ -512,9 +530,9 @@ def db_open_session(finick_config, db_handle):
 def db_merge_with_completed_assignments(finick_config, db_handle):
 
     # assignments file integrity check.
-    assign_fhandle = DbTextFile.create_from_file(
-        finick_config, finick_config.get_assign_file_fullname_fullpath(),
-        is_session_starting=False)
+    # we need to reverse the rows, so we try any requested 'git revert' from newest to oldest
+    assign_fhandle = DbTextFile.create_from_file_rows_reversed(
+        finick_config, finick_config.get_assign_file_fullname_fullpath())
 
     if not assign_fhandle.is_ok:
         raise FinickError('Failed to parse the completed assignments file.')
