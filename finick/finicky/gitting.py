@@ -3,7 +3,7 @@ from __future__ import division  # py3 style. division promotes to floating poin
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
-import finicky.parse_config
+from finicky.parse_config import AssertType_FinickConfig
 from finicky.error import FinickError
 
 import subprocess
@@ -24,8 +24,9 @@ _REASON_STRING_FINICK_REVERT = 'finick-driven automated git-revert commit'
 
 def _dec_assign_to_globals(F):
     def wrapper(*args):
+        import finicky.gitting
         finick_config = args[0]
-        finicky.parse_config.AssertType_FinickConfig(finick_config)
+        AssertType_FinickConfig(finick_config)
 
         if finick_config.verbosity >= 1:
             finicky.gitting._quietness = ' '  # verbosity is ENABLED. we do not use the quiet flag
@@ -39,7 +40,7 @@ def _dec_assign_to_globals(F):
 
 def _git_establish_session_readiness(finick_config, is_session_starting):
 
-    finicky.parse_config.AssertType_FinickConfig(finick_config)
+    AssertType_FinickConfig(finick_config)
 
     _git_current_user_email(finick_config)
 
@@ -98,7 +99,7 @@ def git_establish_session_readiness_start(finick_config):
 @_dec_assign_to_globals
 def git_repo_contains_committed_file(finick_config, which_file):
 
-    finicky.parse_config.AssertType_FinickConfig(finick_config)
+    AssertType_FinickConfig(finick_config)
 
     # log has this {--ignore-submodules[=<when>]}, but it only matters for showing patches? (diffs)
     # this can be a false positive if the file is on disk, but has been deleted from the repo
@@ -141,7 +142,7 @@ def _git_difftree_does_find_content(finick_config, commit_hash_str):
 @_dec_assign_to_globals
 def _git_list_submodules(finick_config):
 
-    finicky.parse_config.AssertType_FinickConfig(finick_config)
+    AssertType_FinickConfig(finick_config)
 
     submodule_paths = []
 
@@ -171,7 +172,7 @@ def _git_list_submodules(finick_config):
 @_dec_assign_to_globals
 def git_retrieve_history(finick_config):
 
-    finicky.parse_config.AssertType_FinickConfig(finick_config)
+    AssertType_FinickConfig(finick_config)
 
     # --date=local shows timestamps in user's local timezone.
     # meaning that the dates are 'translated' to the timezone of the current
@@ -311,7 +312,7 @@ def git_retrieve_history(finick_config):
 @_dec_assign_to_globals
 def _git_current_user_email(finick_config):
 
-    finicky.parse_config.AssertType_FinickConfig(finick_config)
+    AssertType_FinickConfig(finick_config)
 
     results = _git_exec_and_return_stdout('git config user.email',
                                           finick_config.repopath)
@@ -339,7 +340,7 @@ def _git_commit_and_push(finick_config, commit_note1, commit_note2):
 
 
 def _git_stage_the_edited_db(finick_config):
-    finicky.parse_config.AssertType_FinickConfig(finick_config)
+    AssertType_FinickConfig(finick_config)
 
     the_db = finick_config.get_db_file_fullname_fullpath()
 
@@ -349,7 +350,7 @@ def _git_stage_the_edited_db(finick_config):
 
 @_dec_assign_to_globals
 def git_perform_maintenance_commit(finick_config):
-    finicky.parse_config.AssertType_FinickConfig(finick_config)
+    AssertType_FinickConfig(finick_config)
 
     the_db = finick_config.get_db_file_fullname_fullpath()
 
@@ -376,7 +377,7 @@ def git_perform_maintenance_commit(finick_config):
 
 @_dec_assign_to_globals
 def git_perform_sessionstart_commit(finick_config):
-    finicky.parse_config.AssertType_FinickConfig(finick_config)
+    AssertType_FinickConfig(finick_config)
 
     _git_stage_the_edited_db(finick_config)
 
@@ -391,7 +392,7 @@ def git_perform_sessionstart_commit(finick_config):
 
 @_dec_assign_to_globals
 def git_perform_session_completion_commit(finick_config, work_count):
-    finicky.parse_config.AssertType_FinickConfig(finick_config)
+    AssertType_FinickConfig(finick_config)
 
     _git_stage_the_edited_db(finick_config)
 
@@ -407,7 +408,7 @@ def git_perform_session_completion_commit(finick_config, work_count):
 
 @_dec_assign_to_globals
 def git_perform_session_abort_commit(finick_config):
-    finicky.parse_config.AssertType_FinickConfig(finick_config)
+    AssertType_FinickConfig(finick_config)
 
     _git_stage_the_edited_db(finick_config)
 
