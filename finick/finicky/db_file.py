@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 
 import finicky.gitting
-from finicky.db_row import DbRow
+from finicky.db_row import DbRow, AssertType_DbRow
 from finicky.error import FinickError
 from finicky.api import _  # part of gettext testing
 
@@ -26,13 +26,13 @@ class _DbRowsCollection(object):
         self.__rows[len(self.__rows) - 1].set_forefront_marker(linetext)
 
     def append_drow(self, drow):
-        # todo: assert type DbRow
+        AssertType_DbRow(drow)
         self.__rows.append(drow)
         self.__lookupmap[drow.commithash] = drow
         self.__lookup_size_10[drow.commithash[0:10]] = drow
 
     def prepend_drow(self, drow):
-        # todo: assert type DbRow
+        AssertType_DbRow(drow)
         self.__rows.insert(0, drow)
         self.__lookupmap[drow.commithash] = drow
         self.__lookup_size_10[drow.commithash[0:10]] = drow
@@ -53,6 +53,8 @@ class _DbRowsCollection(object):
         return dbrow.committer != finick_config.reviewer
 
     def find_then_mark_then_return_assignments(self, finick_config):
+        """This function should always do 'the opposite' of find_then_reverse_assignments
+        """
         # changing assigned items from TYPE_WAIT to TYPE_NOW
         results = []
 
@@ -67,6 +69,8 @@ class _DbRowsCollection(object):
         return results
 
     def find_then_reverse_assignments(self, finick_config):
+        """This function should always do 'the opposite' of find_then_mark_then_return_assignments
+        """
         for r in self.__rows:
             if r.row_type == r.TYPE_NOW:
                 r.cancel_assignment_for_current_review_session()
@@ -97,7 +101,7 @@ class _DbRowsCollection(object):
         return results
 
     def add_new_commits(self, incoming_rows):
-        # incoming_rows is a list of DbRow objects.
+        # incoming_rows is a list of DbRow objects. it is a PYTHON LIST! not a _DbRowsCollection!
         # IMPORTANT: 'incoming_rows' is NOT JUST new content. it is EXPECTED to overlap with current content in __rows
 
         if self.is_empty():

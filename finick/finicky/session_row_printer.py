@@ -3,7 +3,8 @@ from __future__ import division  # py3 style. division promotes to floating poin
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
-from finicky.db_row import DbRow
+from finicky.db_row import AssertType_DbRow
+from finicky.parse_config import AssertType_FinickConfig
 from finicky.error import FinickError
 
 import datetime
@@ -16,6 +17,14 @@ class SessionRowPrinter(object):
         self.__assignmentlist = assignments
         self.__todoslist = todos_n_pleases
 
+        AssertType_FinickConfig(self.__finick_config)
+
+        for a in self.__assignmentlist:
+            AssertType_DbRow(a)
+
+        for t in self.__todoslist:
+            AssertType_DbRow(t)
+
     def nothing_to_review(self):
         return len(self.__assignmentlist) == 0
 
@@ -23,6 +32,8 @@ class SessionRowPrinter(object):
         if len(self.__todoslist) > 0:
             t_list = []
             p_list = []
+
+            # in the SessionRowPrinter ctor, we asserted AssertType_DbRow on all in __todoslist
             for i in self.__todoslist:
                 if i.row_type == i.TYPE_TODO:
                     t_list.append(i)
@@ -82,6 +93,7 @@ class SessionRowPrinter(object):
         # mode 'w' will TRUNCATE the file
         text_file = open(assign_file, encoding='utf-8', mode='w')
 
+        # in the SessionRowPrinter ctor, we asserted AssertType_DbRow on all in __assignmentlist
         for r in self.__assignmentlist:
             r.write_to_diskfile(text_file)
 

@@ -8,7 +8,20 @@ from finicky.error import FinickError
 import datetime
 
 
+def AssertType_DbRow(o):
+    rhs = DbRow.dummyinstance()
+    incoming_type = str(type(o))
+    if type(o) != type(rhs):
+        raise FinickError(
+            "AssertType_DbRow failed. DbRow was required, but instead we got: "
+            + incoming_type)
+
+
 class DbRow(object):
+    @classmethod
+    def dummyinstance(cls):
+        return cls(True)
+
     @classmethod
     def create_from_string(cls, string_to_parse, file_comment):
         return cls(False, string_to_parse, file_comment)
@@ -106,15 +119,67 @@ class DbRow(object):
 
     # yapf: enable
 
+    def _convert_rowtype_constant_to_string(self, rowtype_int):
+        if rowtype_int == self.__TYPE_OK:
+            return 'OK'
+        elif rowtype_int == self.__TYPE_OOPS:
+            return 'OOPS'
+        elif rowtype_int == self.__TYPE_WAIT:
+            return 'WAIT'
+        elif rowtype_int == self.__TYPE_FIXD:
+            return 'FIXD'
+        elif rowtype_int == self.__TYPE_TODO:
+            return 'TODO'
+        elif rowtype_int == self.__TYPE_HIDE:
+            return 'HIDE'
+        elif rowtype_int == self.__TYPE_NOW:
+            return 'NOW'
+        elif rowtype_int == self.__TYPE_PLS:
+            return 'PLS'
+        elif rowtype_int == self.__TYPE_RVRT:
+            return 'RVRT'
+        else:
+            err = 'Invalid row type: ' + str(rowtype_int)
+            raise FinickError(err)
+
+    def _convert_string_to_rowtype_constant(self, rowtype_string, linetext):
+        if rowtype_string == 'OK':
+            return self.__TYPE_OK
+        elif rowtype_string == 'OOPS':
+            return self.__TYPE_OOPS
+        elif rowtype_string == 'WAIT':
+            return self.__TYPE_WAIT
+        elif rowtype_string == 'FIXD':
+            return self.__TYPE_FIXD
+        elif rowtype_string == 'TODO':
+            return self.__TYPE_TODO
+        elif rowtype_string == 'HIDE':
+            return self.__TYPE_HIDE
+        elif rowtype_string == 'NOW':
+            return self.__TYPE_NOW
+        elif rowtype_string == 'PLS':
+            return self.__TYPE_PLS
+        elif rowtype_string == 'RVRT':
+            return self.__TYPE_RVRT
+        else:
+            err = 'Invalid row type: ' + rowtype_string + ', on row: [' + linetext + ']'
+            raise FinickError(err)
+
     def assign_for_current_review_session(self, reviewer_email):
+        """This function should always do 'the opposite' of cancel_assignment_for_current_review_session
+        """
         self.__rowtype = self.__TYPE_NOW
         self.__reviewer = reviewer_email
 
     def cancel_assignment_for_current_review_session(self):
+        """This function should always do 'the opposite' of assign_for_current_review_session
+        """
         self.__rowtype = self.__TYPE_WAIT
         self.__reviewer = ''
 
     def _store_incoming_todo_refs(self, assignment_row, ref_checker_func):
+        """This helper function plays a part in merging a completed assignment with a db_file row
+        """
         # here we enforce that there is at least one valid todo-ref.
         # also, we make the todo-refs all be exactly length 10 strings.
         # lastly, replace self.__todo_refs with these len-10 strings.
@@ -140,6 +205,8 @@ class DbRow(object):
         self.__todo_refs = [i[0:10] for i in assignment_row.todo_refs]
 
     def throw_exception_if_bad_actioncomment(self):
+        """This code is in a function (instead of coded in place) so that it can be used by db_row *and* db_file
+        """
         if len(self.comment) < 3:
             raise FinickError(
                 'Row ' + self.commithash + ' was marked type ' +
@@ -147,6 +214,10 @@ class DbRow(object):
                     self.row_type) + ' but it is missing a helpful comment!')
 
     def _choose_between_our_reviewer_string_and_ar(self, assignment_row):
+        """Uses the incoming reviewer (from assignments file) if it is non-empty. Otherwise,
+        we use self.__reviewer, which should trace back to whatever gitting._git_current_user_email
+        returned back when assignments were GENERATED.
+        """
         rslt_reviewer = assignment_row._DbRow__reviewer.rstrip().lstrip()
         if len(rslt_reviewer) == 0:
             rslt_reviewer = self.__reviewer
@@ -154,6 +225,9 @@ class DbRow(object):
         return rslt_reviewer
 
     def _merge_TODO_private_helper(self, ar, incoming_reviewer):
+        """This code is in a function (instead of coded in place) because we need it twice:
+        we use it during the 'normal' merge, and also during the special-case logic for OOPS rows.
+        """
         if not (ar.row_type == ar.TYPE_TODO or ar.row_type == ar.TYPE_PLS):
             raise FinickError(
                 'Function misuse. Only call into here with a row of type TODO or PLS.')
@@ -165,7 +239,7 @@ class DbRow(object):
 
     def merge_OOPS_row(self, assignment_row, reverthash, reason_to_hide,
                        git_driver_email):
-        # if reverthash is '', then the revert failed. we create a TODO instead.
+        # if reverthash is empty (''), then the revert failed. we create a TODO instead.
         # otherwise, mark our OOPS and also return the _NEW_ RVRT ROW
         new_row = None
 
@@ -388,52 +462,6 @@ class DbRow(object):
                 'Warning: setting forefront info on a DbRow that already had such info.')
 
         self.__forefront_string = forefront_marker_string
-
-    def _convert_rowtype_constant_to_string(self, rowtype_int):
-        if rowtype_int == self.__TYPE_OK:
-            return 'OK'
-        elif rowtype_int == self.__TYPE_OOPS:
-            return 'OOPS'
-        elif rowtype_int == self.__TYPE_WAIT:
-            return 'WAIT'
-        elif rowtype_int == self.__TYPE_FIXD:
-            return 'FIXD'
-        elif rowtype_int == self.__TYPE_TODO:
-            return 'TODO'
-        elif rowtype_int == self.__TYPE_HIDE:
-            return 'HIDE'
-        elif rowtype_int == self.__TYPE_NOW:
-            return 'NOW'
-        elif rowtype_int == self.__TYPE_PLS:
-            return 'PLS'
-        elif rowtype_int == self.__TYPE_RVRT:
-            return 'RVRT'
-        else:
-            err = 'Invalid row type: ' + str(rowtype_int)
-            raise FinickError(err)
-
-    def _convert_string_to_rowtype_constant(self, rowtype_string, linetext):
-        if rowtype_string == 'OK':
-            return self.__TYPE_OK
-        elif rowtype_string == 'OOPS':
-            return self.__TYPE_OOPS
-        elif rowtype_string == 'WAIT':
-            return self.__TYPE_WAIT
-        elif rowtype_string == 'FIXD':
-            return self.__TYPE_FIXD
-        elif rowtype_string == 'TODO':
-            return self.__TYPE_TODO
-        elif rowtype_string == 'HIDE':
-            return self.__TYPE_HIDE
-        elif rowtype_string == 'NOW':
-            return self.__TYPE_NOW
-        elif rowtype_string == 'PLS':
-            return self.__TYPE_PLS
-        elif rowtype_string == 'RVRT':
-            return self.__TYPE_RVRT
-        else:
-            err = 'Invalid row type: ' + rowtype_string + ', on row: [' + linetext + ']'
-            raise FinickError(err)
 
     def write_to_diskfile(self, the_file):
         # the_file is expected to be a TextIOBase (from io)
