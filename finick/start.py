@@ -9,9 +9,7 @@ from finicky.api import (prelaunch_checklist_open, _,
                          finick_db_integrity_check_open,
                          finick_preopen_session, finick_open_session,
                          finick_close_session_nothing_to_review)
-
 from finicky.gitting import git_establish_session_readiness_start
-
 from finicky.error import FinickError
 
 import os

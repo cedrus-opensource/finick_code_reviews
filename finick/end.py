@@ -9,6 +9,7 @@ from finicky.api import (prelaunch_checklist_close,
                          finick_db_integrity_check_close,
                          finick_db_merge_with_completed_assignments)
 from finicky.gitting import git_establish_session_readiness_end
+from finicky.error import FinickError
 
 import os
 """
