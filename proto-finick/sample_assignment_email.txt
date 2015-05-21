@@ -1,0 +1,148 @@
+
+Things to remember:
+
+No two people are reviewing the same code.
+
+No one is reviewing his/her own code.
+
+Each list is in reverse chronological order.
+
+We all are assigned roughly the same amount of actual changes.
+(That could be a long list of brief commits, or a brief list of long commits.)
+
+If you have no assignments in any given repo, it could be that:
+a. there wasn't much activity in that repo during this review period,
+or b. all of the activity in that repo was your own.
+
+
+
+Code to be reviewed by Eve:
+
+	MediaProj:
+
+		(no assignments for review here)
+
+	FL-NewBranch:
+
+		1. 37164bb7 - https://github.com/acmecorp/Flagship/commit/37164bb79e02fe5c1efe917938554eebaca205c5
+
+		   Wed, 13 Mar 2013 14:19:28 -0700
+
+		   Affected lines: 409
+
+		   Alice Young: wired in a bunch more gui elements
+
+		2. 5de48415 - https://github.com/acmecorp/Flagship/commit/5de4841506e894da7668a7496bbddb3e3fd882c8
+
+		   Tue, 12 Mar 2013 10:38:51 -0700
+
+		   Affected lines: 45
+
+		   Alice Young: just code cleanup. moving implementation OUT OF the header, and some whitespace update...
+
+		3. 3541cb88 - https://github.com/acmecorp/Flagship/commit/3541cb887eb98c8456c713570d1e8266d5dc9cb2
+
+		   Tue, 12 Mar 2013 09:43:35 -0700
+
+		   Affected lines: 36
+
+		   Bob Smart: Adding _B_TL to a few functions to keep things clear for the time being.
+
+	Flagship:
+
+		(no assignments for review here)
+
+	Utils:
+
+		(no assignments for review here)
+
+
+
+
+
+Code to be reviewed by Bob:
+
+	MediaProj:
+
+		(no assignments for review here)
+
+	FL-NewBranch:
+
+		1. 38aa5142 - https://github.com/acmecorp/Flagship/commit/38aa51424efc42691adf9387dfbb3a6b79741689
+
+		   Thu, 14 Mar 2013 11:30:49 -0700
+
+		   Affected lines: 224
+
+		   Alice Young: what this commit should accomplish: each time a new selection on the LHS causes a pane...
+
+		2. 813186fd - https://github.com/acmecorp/Flagship/commit/813186fd7d58c0b6d4147b8ce2ac23ea60b0feb8
+
+		   Wed, 13 Mar 2013 14:37:42 -0700
+
+		   Affected lines: 87
+
+		   Alice Young: wired in a few more gui elements
+
+	Flagship:
+
+		(no assignments for review here)
+
+	Utils:
+
+		(no assignments for review here)
+
+
+
+
+
+Code to be reviewed by Alice:
+
+	MediaProj:
+
+		(no assignments for review here)
+
+	FL-NewBranch:
+
+		1. 17882b4f - https://github.com/acmecorp/Flagship/commit/17882b4f927f27bc3fcce0bfce57a767a19ee211
+
+		   Tue, 12 Mar 2013 10:12:12 -0700
+
+		   Affected lines: 501
+
+		   Bob Smart: Adding tooltips to the at-a-glance icons. Actual text needs to be finalized.
+
+		2. 813bfecc - https://github.com/acmecorp/Flagship/commit/813bfecc523bd3f0d36ae9a051b63224c44610b4
+
+		   Tue, 12 Mar 2013 08:48:21 -0700
+
+		   Affected lines: 6
+
+		   Bob Smart: A common theme lately with inattentive pastes causing trouble. Fixing another one of ...
+
+		3. 99e187fc - https://github.com/acmecorp/Flagship/commit/99e187fc478be67cbda07d622358634a640db533
+
+		   Mon, 11 Mar 2013 16:42:05 -0700
+
+		   Affected lines: 5
+
+		   Bob Smart: Fixing event handlers for some of the text event plugin page controls.
+
+		4. b79b5991 - https://github.com/acmecorp/Flagship/commit/b79b5991454b54d7dfddaed87efca973f9424680
+
+		   Mon, 11 Mar 2013 14:03:50 -0700
+
+		   Affected lines: 82
+
+		   Bob Smart: Fixing a crash and sizing issues with the startup dialog.
+
+	Flagship:
+
+		(no assignments for review here)
+
+	Utils:
+
+		(no assignments for review here)
+
+
+
