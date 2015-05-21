@@ -41,4 +41,7 @@ $ ./finick/start.py # you do not necessary want to run this yet. the path is her
 
 8. you should add code_reviews/finick to the .gitignore for your repo.
 
+9. in the .gitignore, you also want to ignore these temp-files:
+code_reviews/assignments*
+code_reviews/todo*
 
