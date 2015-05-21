@@ -5,7 +5,7 @@ from __future__ import division  # py3 style. division promotes to floating poin
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
-from finicky.basics import prelaunch_checklist_open, _
+from finicky.api import prelaunch_checklist_open, _
 from finicky.gitting import git_establish_session_readiness_start
 from finicky.db_file import db_integrity_check_open, db_preopen_session, db_open_session, db_close_session_nothing_to_review
 from finicky.error import FinickError

@@ -7,7 +7,7 @@ import finicky.gitting
 from finicky.db_row import DbRow
 from finicky.session_row_printer import SessionRowPrinter
 from finicky.error import FinickError
-from finicky.basics import _
+from finicky.api import _ # part of gettext testing
 
 import os
 from io import open
