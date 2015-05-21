@@ -30,7 +30,7 @@ https://github.com/cedrus-opensource/finick_code_reviews/blob/master/sample.revi
 Note: if you cloned finick_code_reviews into a folder named finick_code_reviews (the git clone default behavior),
 then you will have a folder "finick_code_reviews/finick/" that (among other things) contains start.py
 
-7. in your code_reviews subfolder, create a symlink to "finick_code_reviews/finick/"
+7. in your code_reviews subfolder, create a symlink to "finick_code_reviews/finick/" (see WIN-NOTE below)
 
 At this point, the following should be possible:
 
@@ -38,6 +38,17 @@ $ cd code_reviews
 $ ./finick/start.py # you do not necessary want to run this yet. the path is here to explain file layout.
 
 (if you did just run start.py, then you can run abort.py to abort the review session, if it started successfully)
+
+WIN-NOTE: how to make a 'symlink' on windows...
+
+you need to open a windows CMD.exe window that is running AS ADMINISTRATOR.
+The command and its output look like this:
+
+G:\path\to\yourproject\code_reviews>mklink /D finick g:\your\path\finick_code_reviews\finick
+symbolic link created for finick <<===>> g:\your\path\finick_code_reviews\finick
+
+(credits to http://stackoverflow.com/questions/18641864/git-bash-shell-fails-to-create-symbolic-links)
+
 
 8. you should add code_reviews/finick to the .gitignore for your repo.
 
