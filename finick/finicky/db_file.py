@@ -430,6 +430,8 @@ class DbTextFile(object):
         # the commit must be chosen carefully. when we have 2+ diverging paths in the git
         # history that have not yet merged back together, we do NOT want to pick a commit
         # from during that diverged part of history.
+        # (note: limiting how far to go back is even MORE RELEVANT -- and with a bigger
+        #  potential for optimization -- when we get here via db_merge_with_completed...)
         commits = finicky.gitting.git_retrieve_history(self.__finick_config)
 
         incoming_rows = []
@@ -536,6 +538,11 @@ def db_merge_with_completed_assignments(finick_config, db_handle):
 
     if not assign_fhandle.is_ok:
         raise FinickError('Failed to parse the completed assignments file.')
+
+    # after the (open-and-read-db_file,open-and-read-assignfile) stuff, between then and adding new revert-commits,
+    # we need to account for any commits that happened in the interim.
+    # (we know AT LEAST ONE commit happened: the CommitStringStartSession commit)
+    db_handle.add_new_commits()
 
     # note: the rows from assignments might be mutated after this call:
     work_count = db_handle.merge_completed_assignments(assign_fhandle)
