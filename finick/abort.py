@@ -5,9 +5,10 @@ from __future__ import division  # py3 style. division promotes to floating poin
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
-from finicky.api import prelaunch_checklist_close
+from finicky.api import (prelaunch_checklist_close,
+                         finick_db_integrity_check_close,
+                         finick_abort_current_assignments)
 from finicky.gitting import git_establish_session_readiness_end
-from finicky.db_file import db_integrity_check_close, db_abort_current_assignments
 
 import os
 
@@ -29,12 +30,12 @@ def abort_session():
     # reviews file should now be properly upgraded already.
     # first line in DB file should be file version info
 
-    db_handle = db_integrity_check_close(finick_config)
+    db_handle = finick_db_integrity_check_close(finick_config)
 
     if None != db_handle:
         # commit and push the abort message
         # when the next call completes exception-free, it also closes the session:
-        db_abort_current_assignments(finick_config, db_handle)
+        finick_abort_current_assignments(finick_config, db_handle)
 
 
 abort_session()

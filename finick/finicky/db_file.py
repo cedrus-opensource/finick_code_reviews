@@ -5,9 +5,8 @@ from __future__ import absolute_import
 
 import finicky.gitting
 from finicky.db_row import DbRow
-from finicky.session_row_printer import SessionRowPrinter
 from finicky.error import FinickError
-from finicky.api import _ # part of gettext testing
+from finicky.api import _  # part of gettext testing
 
 import os
 from io import open
@@ -468,106 +467,3 @@ class DbTextFile(object):
         # note: the rows from assignments might be mutated after this call:
         return self.__rowcollection.merge_completed_assignments(
             assign_file, self.__finick_config)
-
-
-def db_integrity_check_open(finick_config):
-
-    return _db_integrity_check(finick_config, True)
-
-
-def db_integrity_check_close(finick_config):
-
-    # reviews file should now be properly upgraded already.
-    # first line in DB file should be file version info
-    return _db_integrity_check(finick_config, False)
-
-
-def _db_integrity_check(finick_config, is_session_starting):
-
-    db_handle = DbTextFile.create_from_file(
-        finick_config, finick_config.get_db_file_fullname_fullpath(),
-        is_session_starting)
-
-    if db_handle.is_ok:
-        return db_handle
-    else:
-        return None
-
-
-def db_preopen_session(finick_config, db_handle):
-
-    finicky.parse_config.AssertType_FinickConfig(finick_config)
-    AssertType_DbTextFile(db_handle)
-
-    # if we are starting one session, there must not be any other session in progress (even from other INI file) [job of git_establish_session_readiness_start]
-
-    db_handle.purge_older_reviewed_commits()
-    db_handle.add_new_commits()
-
-    assignments = db_handle.generate_assignments_for_this_session(finick_config)
-
-    todos_n_pleases = db_handle.generate_todos_for_this_session(finick_config)
-
-    wrapper_helper = SessionRowPrinter(finick_config, assignments,
-                                       todos_n_pleases)
-    return wrapper_helper
-
-
-def db_close_session_nothing_to_review(finick_config, db_handle):
-
-    # when this is called there shouldn't be any NOW rows. no NOW markers to remove, right?
-    db_handle.flush_back_to_disk()
-
-    finicky.gitting.git_perform_maintenance_commit(finick_config)
-
-
-def db_open_session(finick_config, db_handle):
-
-    # do this AFTER generating assignments, so the 'NOW' markers can show up
-    db_handle.flush_back_to_disk()
-
-    finicky.gitting.git_perform_sessionstart_commit(finick_config)
-
-
-def db_merge_with_completed_assignments(finick_config, db_handle):
-
-    # assignments file integrity check.
-    # we need to reverse the rows, so we try any requested 'git revert' from newest to oldest
-    assign_fhandle = DbTextFile.create_from_file_rows_reversed(
-        finick_config, finick_config.get_assign_file_fullname_fullpath())
-
-    if not assign_fhandle.is_ok:
-        raise FinickError('Failed to parse the completed assignments file.')
-
-    # after the (open-and-read-db_file,open-and-read-assignfile) stuff, between then and adding new revert-commits,
-    # we need to account for any commits that happened in the interim.
-    # (we know AT LEAST ONE commit happened: the CommitStringStartSession commit)
-    db_handle.add_new_commits()
-
-    # note: the rows from assignments might be mutated after this call:
-    work_count = db_handle.merge_completed_assignments(assign_fhandle)
-
-    # mark ##__forefront__## position in reviews file
-
-    db_handle.flush_back_to_disk()
-
-    # we can leave the on-disk assignments file alone. user might want to keep it.
-
-    # commit session-end message, push all to origin reviews branch
-    finicky.gitting.git_perform_session_completion_commit(finick_config,
-                                                          work_count)
-
-    # push whatever possible to zero branch
-    # send email (email to remind todo items. todo items past certain date?)
-
-
-def db_abort_current_assignments(finick_config, db_handle):
-
-    db_handle.abort_current_assignments(finick_config)
-
-    db_handle.flush_back_to_disk()
-
-    # we can leave the on-disk assignments file alone. user might want to keep it.
-
-    # commit session-abort message, push all to origin reviews branch
-    finicky.gitting.git_perform_session_abort_commit(finick_config)
