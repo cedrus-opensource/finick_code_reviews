@@ -47,6 +47,9 @@ class DbRow(object):
 
         self.__ACTION_COMMENT_CHAR = '#'
 
+        # we rely heavily on knowing they are length 10. (rely on this fact for string equality testing)
+        self.__LENGTH_TODOREF_HASH = 10
+
         self.__TYPE_ERRORTYPE = -1
         # yapf: disable
         self.__TYPE_OK   =  1  # reviewer approved/accepted the commit
@@ -70,7 +73,7 @@ class DbRow(object):
         self.__commit_datestr = ''
         self.__rowtype = self.__TYPE_ERRORTYPE
         self.__reviewer = ''
-        # each todo ref will be the FIRST 10 of a hash. always len 10.
+        # each todo ref will be the FIRST few chars of a hash. always length __LENGTH_TODOREF_HASH
         self.__todo_refs = []
         self.__action_comment = ''
         # at some point we might need more structure, like a forefront DATETIME object:
@@ -105,6 +108,9 @@ class DbRow(object):
     TYPE_PLS   = property(lambda s : s.__TYPE_PLS,   _fail_setter)
 
     TYPE_RVRT  = property(lambda s : s.__TYPE_RVRT,  _fail_setter)
+
+    # this means "short HASH size". We always store the todo-ref hashes in the same specific size string.
+    SHORT_H_SIZE = property(lambda s : s.__LENGTH_TODOREF_HASH, _fail_setter)
 
 
     row_type   = property(lambda s : s.__rowtype,    _fail_setter)
@@ -181,8 +187,8 @@ class DbRow(object):
         """This helper function plays a part in merging a completed assignment with a db_file row
         """
         # here we enforce that there is at least one valid todo-ref.
-        # also, we make the todo-refs all be exactly length 10 strings.
-        # lastly, replace self.__todo_refs with these len-10 strings.
+        # also, we make the todo-refs all be exactly the same length!
+        # lastly, replace self.__todo_refs with these special-length strings.
         if len(assignment_row.todo_refs) < 1:
             raise FinickError(
                 'Assignment row ' + assignment_row.commithash +
@@ -190,19 +196,21 @@ class DbRow(object):
                 'earlier commits).')
 
         for tr in assignment_row.todo_refs:
-            if len(tr) < 10:
+            if len(tr) < self.SHORT_H_SIZE:
                 raise FinickError(
                     'Todo-ref ' + tr + ' on assignment row ' +
-                    assignment_row.commithash + ' is not length-10 or longer.')
+                    assignment_row.commithash + ' is not length-' + str(
+                        self.SHORT_H_SIZE) + ' or longer.')
 
             # look up tr and make sure it refers to a KNOWN commit
-            if False == ref_checker_func(tr[0:10]):
+            if False == ref_checker_func(tr[0:self.SHORT_H_SIZE]):
                 raise FinickError(
                     'On assignment row ' + assignment_row.commithash +
                     ', invalid todo-ref: ' + tr)
 
-        # clip to length 10 and assign using list comprehension:
-        self.__todo_refs = [i[0:10] for i in assignment_row.todo_refs]
+        # clip to length SHORT_H_SIZE and assign using list comprehension:
+        self.__todo_refs = [i[0:self.SHORT_H_SIZE]
+                            for i in assignment_row.todo_refs]
 
     def throw_exception_if_bad_actioncomment(self):
         """This code is in a function (instead of coded in place) so that it can be used by db_row *and* db_file
@@ -260,7 +268,7 @@ class DbRow(object):
                 '__commit_hash': reverthash,
                 '__rowtype': self.__TYPE_RVRT,
                 '__reviewer': incoming_reviewer,
-                '__todo_refs': [self.__commit_hash[0:10]],
+                '__todo_refs': [self.__commit_hash[0:self.SHORT_H_SIZE]],
                 '__action_comment': reason_to_hide
             }
 
@@ -370,7 +378,7 @@ class DbRow(object):
         if len_of_row_parts >= 5:
             self.__reviewer = row_parts[4]
 
-        # each todo ref will be the FIRST 10 of a hash. always len 10.
+        # each todo ref will be the FIRST few chars of a hash. always length SHORT_H_SIZE
         if len_of_row_parts >= 6:
             comma_sep = ','  # this is duplicated in write_to_diskfile
 
@@ -436,7 +444,7 @@ class DbRow(object):
                        '__commit_hash': reverthash,
                        '__rowtype': self.__TYPE_RVRT,
                        '__reviewer': incoming_reviewer,
-                       '__todo_refs':[self.__commit_hash[0:10]],
+                       '__todo_refs':[self.__commit_hash[0:self.SHORT_H_SIZE]],
                        '__action_comment':reason_to_hide}
                        """
         # we have to handle our today's date
@@ -501,7 +509,7 @@ class DbRow(object):
 
         comma_sep = ','  # this is duplicated in _initialize_from_string
 
-        # each todo ref will be the FIRST 10 of a hash. always len 10.
+        # each todo ref will be the FIRST few chars of a hash. always length SHORT_H_SIZE
         # refs, with commas
         for tr in self.__todo_refs:
             row_text += (tr + comma_sep)  # we remove the final comma next!

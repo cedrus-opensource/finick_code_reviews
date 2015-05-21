@@ -447,8 +447,11 @@ def git_best_effort_to_commit_a_revert(finick_config, hash_to_revert, comment):
         # so now we must do the commit.
 
         commit_note1 = finick_config.str_rvrt
-        commit_note2 = 'revert of ' + hash_to_revert[0:
-                                                     10] + ' by reviewer: ' + finick_config.reviewer + ', '
+        # elsewhere in finick, the size-10 hashes are a hard-requirement. not here!
+        # Here in this commit note, we could show less than 10 chars of the hash, or more.
+        # Here it is just about aesthetics.
+        commit_note2 = ('revert of ' + hash_to_revert[0:10] + ' by reviewer: '
+                        + finick_config.reviewer + ', ')
         commit_note2 += 'due to: ' + comment
 
         _git_exec_and_return_stdout(

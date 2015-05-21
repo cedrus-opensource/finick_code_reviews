@@ -17,7 +17,7 @@ class _DbRowsCollection(object):
     def __init__(self):
         self.__rows = []
         self.__lookupmap = {}
-        self.__lookup_size_10 = {}
+        self.__lookup_short_hash = {}
 
     def is_empty(self):
         return len(self.__rows) == 0
@@ -29,13 +29,13 @@ class _DbRowsCollection(object):
         AssertType_DbRow(drow)
         self.__rows.append(drow)
         self.__lookupmap[drow.commithash] = drow
-        self.__lookup_size_10[drow.commithash[0:10]] = drow
+        self.__lookup_short_hash[drow.commithash[0:drow.SHORT_H_SIZE]] = drow
 
     def prepend_drow(self, drow):
         AssertType_DbRow(drow)
         self.__rows.insert(0, drow)
         self.__lookupmap[drow.commithash] = drow
-        self.__lookup_size_10[drow.commithash[0:10]] = drow
+        self.__lookup_short_hash[drow.commithash[0:drow.SHORT_H_SIZE]] = drow
 
     def write_to_diskfile(self, text_file):
         # the_file is expected to be a TextIOBase (from io)
@@ -88,14 +88,14 @@ class _DbRowsCollection(object):
                     rough_results.append(copy.deepcopy(r))
 
             elif r.row_type == r.TYPE_FIXD:
-                # each todo ref should be length 10
+                # each todo ref should be length SHORT_H_SIZE
                 cancelled_hashes += r.todo_refs
 
         results = []
 
         for r in rough_results:
-            # we expect the todo refs to always be length 10
-            if r.commithash[0:10] not in cancelled_hashes:
+            # we expect the todo refs to always be length SHORT_H_SIZE
+            if r.commithash[0:r.SHORT_H_SIZE] not in cancelled_hashes:
                 results.append(r)
 
         return results
@@ -151,11 +151,13 @@ class _DbRowsCollection(object):
                 newrows_i += 1
 
     def short_commithash_is_known_in_collection(self, commithash_str):
-        if len(commithash_str) != 10:
+        dr = DbRow.dummyinstance()
+        if len(commithash_str) != dr.SHORT_H_SIZE:
             raise FinickError(
-                'The short_commithash lookup function only takes length-10 strings.')
+                'The short_commithash lookup function only takes length-' +
+                str(dr.SHORT_H_SIZE) + ' strings.')
 
-        return commithash_str in self.__lookup_size_10
+        return commithash_str in self.__lookup_short_hash
 
     def merge_completed_assignments(self, assign_file, finick_config):
         AssertType_DbTextFile(assign_file)
