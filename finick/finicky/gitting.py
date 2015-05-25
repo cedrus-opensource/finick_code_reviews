@@ -122,6 +122,10 @@ def git_repo_contains_committed_file(finick_config, which_file):
 @_dec_assign_to_globals
 def _git_difftree_does_find_content(finick_config, commit_hash_str):
 
+    # using a 'diff-tree --cc' trick learned from this web page:
+    #   http://haacked.com/archive/2014/02/21/reviewing-merge-commits/
+    # the 'normal' way to try to view a diff or generate a patch for a particular
+    # commit is insufficient for merge commits. (read that blog post for more info)
     results = _git_exec_and_return_stdout(
         'git diff-tree --cc --pretty=oneline ' + commit_hash_str,
         finick_config.repopath)
