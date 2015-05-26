@@ -37,6 +37,13 @@ class _DbRowsCollection(object):
         self.__lookupmap[drow.commithash] = drow
         self.__lookup_short_hash[drow.commithash[0:drow.SHORT_H_SIZE]] = drow
 
+    def _replace_whole_collection(self, new_list):
+        self.__rows = []
+        self.__lookupmap = {}
+        self.__lookup_short_hash = {}
+        for nr in new_list:
+            self.append_drow(nr)
+
     def write_to_diskfile(self, text_file):
         # the_file is expected to be a TextIOBase (from io)
         for r in self.__rows:
@@ -44,6 +51,9 @@ class _DbRowsCollection(object):
 
     def contains_this_commit(self, commithash_str):
         return commithash_str in self.__lookupmap
+
+    def find_commit_prestored(self, commithash_str):
+        return self.__lookupmap.get(commithash_str, None)
 
     def _configured_strategy_says_to_assign_this_row(self, finick_config,
                                                      dbrow):
@@ -109,46 +119,16 @@ class _DbRowsCollection(object):
             for ir in incoming_rows:
                 self.append_drow(ir)
         else:
-            # work backwards through incoming_rows, looking for one that overlaps with __rows.
-            # if we never find any overlap, report an error. (conflict between WeeksTilPurge, BeginningOfTime, or something?)
-            # once we find an overlap, sanity-check that all further incoming_rows overlap with __rows. otherwise report
-            # a sanity-check failure.
-            # finally, append the NON-overlapping stuff from incoming_rows, preserving order.
 
-            newrows_i = len(incoming_rows) - 1
-            matched_at = -1
+            newrows_i = -1
 
-            # IMPORTANT: 'incoming_rows' is NOT JUST new content. it
-            # is EXPECTED to overlap with current content in __rows
-            while newrows_i >= 0:
-                if self.__rows[len(self.__rows) -
-                               1].commithash == incoming_rows[newrows_i].commithash:
-                    matched_at = newrows_i
-                    break
-
-                newrows_i -= 1
-
-            if matched_at == -1:
-                raise FinickError(
-                    'Unable to find where incoming commits line up with existing commit '
-                    + self.__rows[len(self.__rows) - 1].commithash)
-
-            # keep going, for further sanity check:
-            while newrows_i >= 0:
-
-                if not self.contains_this_commit(
-                    incoming_rows[newrows_i].commithash):
-                    raise FinickError(
-                        'Incoming commits contain commit hashes not known to our prior history! Example: '
-                        + incoming_rows[newrows_i].commithash)
-
-                newrows_i -= 1
-
-            # we made it through sanity checking. now go back to the overlap spot:
-            newrows_i = matched_at + 1
-            while newrows_i < len(incoming_rows):
-                self.append_drow(incoming_rows[newrows_i])
+            for ir in incoming_rows:
                 newrows_i += 1
+                prior_db_copy = self.find_commit_prestored(ir.commithash)
+                if prior_db_copy != None:
+                    incoming_rows[newrows_i] = prior_db_copy
+
+            self._replace_whole_collection(incoming_rows)
 
     def short_commithash_is_known_in_collection(self, commithash_str):
         dr = DbRow.dummyinstance()
