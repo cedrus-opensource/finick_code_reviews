@@ -60,6 +60,10 @@ class _DbRowsCollection(object):
         # when running "start.py -n" , avoid creating any assignments at all:
         if finick_config.opt_nosession:
             return False
+        elif len(finick_config.opt_requests) > 0:
+            for req in finick_config.opt_requests:
+                if dbrow.commithash.startswith(req):
+                    return True
         else:
             # todo: implement a variety of assignment strategies/policies
             # for now, assign anything that wasn't authored by the reviewer:
@@ -441,8 +445,15 @@ class DbTextFile(object):
     def generate_assignments_for_this_session(self, finick_config):
 
         # changing assigned items from TYPE_WAIT to TYPE_NOW
-        return self.__rowcollection.find_then_mark_then_return_assignments(
+        results = self.__rowcollection.find_then_mark_then_return_assignments(
             finick_config)
+
+        if len(finick_config.opt_requests) > 0:
+            if len(results) < 1:
+                raise FinickError(
+                    'Unable to assign any of the requested commits you specified.')
+
+        return results
 
     def generate_todos_for_this_session(self, finick_config):
 

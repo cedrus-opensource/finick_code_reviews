@@ -43,6 +43,7 @@ class FinickConfig(object):
         self.__verbose = -1
         self.__invoker_eml = ''
         self.__only_maint = False
+        self.__requests = []
 
         if not parsed_args is None:
             self._process_args(parsed_args)
@@ -111,6 +112,8 @@ class FinickConfig(object):
 
     opt_nosession = property(lambda s : s.__only_maint, _fail_setter)
 
+    opt_requests  = property(lambda s : s.__requests,   _fail_setter)
+
     # yapf: enable
 
     def _get_file_fullname_fullpath_by_our_name(self, prefix_string):
@@ -158,4 +161,25 @@ class FinickConfig(object):
 
     def _process_args(self, parsed_args):
 
-        self.__only_maint = (parsed_args.no_session == True)
+        try:
+            self.__only_maint = (parsed_args.no_session == True)
+        except AttributeError:
+            self.__only_maint = False
+
+        try:
+            if len(parsed_args.commits) > 0 and parsed_args.commits[0] is None:
+                # this means that no commit-requests (requested assignments) were given at the command line.
+                pass
+            else:
+                if len(parsed_args.commits) < 1:
+                    raise FinickError(
+                        'Command-line argument for commits requested was turned into an empty list.')
+
+                if self.__only_maint:
+                    raise FinickError(
+                        'You cannot both use the \'-n\' flag and list requested commits (for a session) at the same time.')
+
+                self.__requests = parsed_args.commits
+
+        except AttributeError:
+            self.__only_maint = False

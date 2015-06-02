@@ -36,6 +36,14 @@ def prelaunch_checklist_open(calling_filename):
         "-n", "--no-session",
         help="update the db file, output todos, but do not start a session",
         action="store_true")
+    parser.add_argument(
+        "commits",
+        nargs='*',
+        default=[None],
+        help=
+        'you may list 0 or more commit hashes (separated by whitespace) to '
+        'request that these commits (and only these) '
+        'be assigned to you for this review session')
     return _prelaunch_checklist(calling_filename, True, parser)
 
 
