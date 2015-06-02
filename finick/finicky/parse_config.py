@@ -26,7 +26,7 @@ def AssertType_FinickConfig(o):
 
 
 class FinickConfig(object):
-    def __init__(self, file_location, defaults_only=False):
+    def __init__(self, file_location, parsed_args, defaults_only=False):
         self.__is_ok = False
 
         self.__config = ''
@@ -42,13 +42,17 @@ class FinickConfig(object):
         self.__str_rvrt = ''
         self.__verbose = -1
         self.__invoker_eml = ''
+        self.__only_maint = False
+
+        if not parsed_args is None:
+            self._process_args(parsed_args)
 
         if False == defaults_only:
             self._initialize_from_file(file_location)
 
     @classmethod
     def dummyinstance(cls):
-        return cls('', True)
+        return cls('', None, True)
 
     def _fail_setter(self, value):
         raise FinickError("FinickConfig objects are immutable")
@@ -105,6 +109,8 @@ class FinickConfig(object):
     # email address of the reviewer (the person driving the review session)
     reviewer   = property(lambda s : s.__invoker_eml,   _set_email  )
 
+    opt_nosession = property(lambda s : s.__only_maint, _fail_setter)
+
     # yapf: enable
 
     def _get_file_fullname_fullpath_by_our_name(self, prefix_string):
@@ -149,3 +155,7 @@ class FinickConfig(object):
 
         # todo: we need to sanity check this more thoroughly before setting to true
         self.__is_ok = True
+
+    def _process_args(self, parsed_args):
+
+        self.__only_maint = (parsed_args.no_session == True)

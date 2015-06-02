@@ -57,10 +57,13 @@ class _DbRowsCollection(object):
 
     def _configured_strategy_says_to_assign_this_row(self, finick_config,
                                                      dbrow):
-        # todo: implement a variety of assignment strategies/policies
-
-        # for now, assign anything that wasn't authored by the reviewer:
-        return dbrow.committer != finick_config.reviewer
+        # when running "start.py -n" , avoid creating any assignments at all:
+        if finick_config.opt_nosession:
+            return False
+        else:
+            # todo: implement a variety of assignment strategies/policies
+            # for now, assign anything that wasn't authored by the reviewer:
+            return dbrow.committer != finick_config.reviewer
 
     def find_then_mark_then_return_assignments(self, finick_config):
         """This function should always do 'the opposite' of find_then_reverse_assignments

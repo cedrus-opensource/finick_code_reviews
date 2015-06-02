@@ -6,6 +6,7 @@ from __future__ import absolute_import
 import glob
 import gettext
 import locale
+import argparse
 
 # Set up message catalog access.
 # Python-3.4.3//Tools/i18n/pygettext.py finick/finicky/*py *py finick/*py # to generate pot
@@ -30,19 +31,27 @@ from finicky.error import FinickError
 
 
 def prelaunch_checklist_open(calling_filename):
-    return _prelaunch_checklist(calling_filename, True)
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-n", "--no-session",
+        help="update the db file, output todos, but do not start a session",
+        action="store_true")
+    return _prelaunch_checklist(calling_filename, True, parser)
 
 
 def prelaunch_checklist_close(calling_filename):
-    return _prelaunch_checklist(calling_filename, False)
+    parser = argparse.ArgumentParser()
+    return _prelaunch_checklist(calling_filename, False, parser)
 
 
-def _prelaunch_checklist(calling_filename, is_session_starting):
+def _prelaunch_checklist(calling_filename, is_session_starting, parser):
 
     # make sure this is called as finick/start.py (use os.sep). this way we can count on CWD for finding config
     # config integrity check. (older than start of session to prevent mid-session reconfig).
     # are we on the right branch? (check this when False==is_session_starting. on start we will check out the branch)
     # do a git-whoami and make sure we have an email
+
+    args = parser.parse_args()
 
     all_cwd_inis = glob.glob('*ini')
 
@@ -51,7 +60,7 @@ def _prelaunch_checklist(calling_filename, is_session_starting):
         raise FinickError(
             "you must have exactly one (and only one) ini file in the CWD")
 
-    return finicky.parse_config.FinickConfig(all_cwd_inis[0])
+    return finicky.parse_config.FinickConfig(all_cwd_inis[0], args)
 
 
 def finick_db_integrity_check_open(finick_config):
@@ -106,6 +115,10 @@ def finick_close_session_nothing_to_review(finick_config, db_handle):
 
 
 def finick_open_session(finick_config, db_handle):
+
+    if finick_config.opt_nosession:
+        raise FinickError(
+            'Call to api open_session despite the no-session flag being set.')
 
     # do this AFTER generating assignments, so the 'NOW' markers can show up
     db_handle.flush_back_to_disk()
