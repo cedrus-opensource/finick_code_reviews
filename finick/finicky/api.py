@@ -158,12 +158,27 @@ def finick_db_merge_with_completed_assignments(finick_config, db_handle):
 
     # we can leave the on-disk assignments file alone. user might want to keep it.
 
-    # commit session-end message, push all to origin reviews branch
-    finicky.gitting.git_perform_session_completion_commit(finick_config,
-                                                          work_count)
+    if work_count < 1:
+        raise FinickError(
+            'Session-end failed. (see possible remedies below).\n\n' +
+            'Details: merging your assignment file resulted in ZERO ' +
+            'changes to the db_file.' +
+            '\n\nPossible remedies: if you completed ZERO reviews, ' +
+            'you should \'abort\' the session instead of trying to ' +
+            '\'end\' it.  Run the abort command instead.\n\t' +
+            'If you did complete some reviews, then the \'' +
+            finick_config.str_finish +
+            '\' might have already succeeded. Review your git logs ' +
+            'manually, and either use \'git push\' or \'git reset\' ' +
+            'to manually put the repo into the correct state.')
+    else:
+        # send email (email to remind todo items. todo items past certain date?)
 
-    # push whatever possible to zero branch
-    # send email (email to remind todo items. todo items past certain date?)
+        # commit session-end message, push all to origin reviews branch
+        finicky.gitting.git_perform_session_completion_commit(finick_config,
+                                                              work_count)
+
+        # push whatever possible to zero branch
 
 
 def finick_abort_current_assignments(finick_config, db_handle):
