@@ -283,7 +283,8 @@ class DbRow(object):
         # other valid values for ar type: OK, FIXD, TODO, PLS, OOPS.
         # (currently, this function explicitly refuses to handle OOPS)
 
-        work_count = 1
+        # optimistically assume we will do 1 row-count worth of work:
+        work_count = 1  # (might drop to zero later)
 
         if self.__reviewer == '':
             print(
@@ -299,7 +300,19 @@ class DbRow(object):
         # for brevity:
         ar = assignment_row
 
-        if ar.row_type == ar.TYPE_NOW or ar.row_type == ar.TYPE_WAIT:
+        assignment_is_deferred = (ar.row_type == ar.TYPE_NOW or
+                                  ar.row_type == ar.TYPE_WAIT)
+
+        if ar.row_type == self.__rowtype:
+            # row type not being changed, so do not count as work:
+            work_count = 0
+            if not assignment_is_deferred:
+                print('Warning: while processing assignment ' +
+                      self.__commit_hash +
+                      ', db_file shows that this commit was ALREADY marked as '
+                      + self._convert_rowtype_constant_to_string(ar.row_type))
+
+        if assignment_is_deferred:
             work_count = 0
             self.cancel_assignment_for_current_review_session()
 
