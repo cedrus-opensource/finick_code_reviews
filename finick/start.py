@@ -29,7 +29,7 @@ def start_session():
     db_handle = finick_db_integrity_check_open(finick_config)
 
     if None != db_handle:
-        # return value is a SessionRowPrinter
+        # return value is a RowPrinterForSessionStart
         assignments = finick_preopen_session(finick_config, db_handle)
 
         assignments.print_reminders()

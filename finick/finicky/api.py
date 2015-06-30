@@ -27,7 +27,7 @@ http://www.wefearchange.org/2012/06/the-right-way-to-internationalize-your.html
 import finicky.parse_config
 import finicky.email
 from finicky.db_file import DbTextFile, AssertType_DbTextFile
-from finicky.session_row_printer import SessionRowPrinter
+from finicky.session_row_printer import RowPrinterForSessionStart
 from finicky.error import FinickError
 
 
@@ -120,8 +120,8 @@ def finick_preopen_session(finick_config, db_handle):
     # the config will compute whether the debtor is the reviewer or otherwise, based on settings/flags:
     todos_n_pleases = db_handle.generate_todos_for(finick_config.todo_debtor)
 
-    wrapper_helper = SessionRowPrinter(finick_config, assignments,
-                                       todos_n_pleases)
+    wrapper_helper = RowPrinterForSessionStart(finick_config, assignments,
+                                               todos_n_pleases)
     return wrapper_helper
 
 

@@ -11,7 +11,7 @@ import datetime
 from io import open
 
 
-class SessionRowPrinter(object):
+class RowPrinterForSessionStart(object):
     def __init__(self, finick_config, assignments, todos_n_pleases):
         self.__finick_config = finick_config
         self.__assignmentlist = assignments
@@ -38,7 +38,7 @@ class SessionRowPrinter(object):
             t_list = []
             p_list = []
 
-            # in the SessionRowPrinter ctor, we asserted AssertType_DbRow on all in __todoslist
+            # in the RowPrinterForSessionStart ctor, we asserted AssertType_DbRow on all in __todoslist
             for i in self.__todoslist:
                 if i.row_type == i.TYPE_TODO:
                     t_list.append(i)
@@ -98,7 +98,7 @@ class SessionRowPrinter(object):
         # mode 'w' will TRUNCATE the file
         text_file = open(assign_file, encoding='utf-8', mode='w')
 
-        # in the SessionRowPrinter ctor, we asserted AssertType_DbRow on all in __assignmentlist
+        # in the RowPrinterForSessionStart ctor, we asserted AssertType_DbRow on all in __assignmentlist
         for r in self.__assignmentlist:
             r.write_to_diskfile(text_file)
 
