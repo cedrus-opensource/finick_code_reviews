@@ -239,4 +239,4 @@ class FinickConfig(object):
                 self.__requests = parsed_args.commits
 
         except AttributeError:
-            self.__only_maint = False
+            self.__requests = []
