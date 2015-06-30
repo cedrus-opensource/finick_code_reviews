@@ -43,6 +43,7 @@ class FinickConfig(object):
         self.__verbose = -1
         self.__invoker_eml = ''
         self.__only_maint = False
+        self.__only_todos_for = ''
         self.__requests = []
         self.__mailserver = ''
         self.__mailport = 0
@@ -68,6 +69,15 @@ class FinickConfig(object):
     def _set_email(self, value):
         # todo: verify it is a valid-looking email
         self.__invoker_eml = value
+
+    def _printing_todos(self):
+        return (len(self.__only_todos_for) > 0)
+
+    def _whose_todos(self):
+        if (len(self.__only_todos_for) > 0):
+            return self.__only_todos_for
+        else:
+            return self.__invoker_eml
 
     # yapf: disable
     def contains_a_configurable_tool_string(self, the_string):
@@ -125,9 +135,14 @@ class FinickConfig(object):
     # email address of the reviewer (the person driving the review session)
     reviewer   = property(lambda s : s.__invoker_eml,   _set_email  )
 
+    # default todo_debtor is session-driver/reviewer. when '-t DEBTOR' is used, then todo_debtor is DEBTOR
+    todo_debtor   = property(  _whose_todos,            _fail_setter)
+
     opt_nosession = property(lambda s : s.__only_maint, _fail_setter)
 
     opt_requests  = property(lambda s : s.__requests,   _fail_setter)
+
+    opt_onlytodos = property(  _printing_todos,         _fail_setter)
 
     # yapf: enable
 
@@ -143,7 +158,8 @@ class FinickConfig(object):
         return self.confdir + os.sep + self.configname + '.txt'
 
     def get_todos_file_fullname_fullpath(self):
-        return self._get_file_fullname_fullpath_by_our_name('todos')
+        name_prefix = 'todos.for.' + self.todo_debtor
+        return self._get_file_fullname_fullpath_by_our_name(name_prefix)
 
     def get_assign_file_fullname_fullpath(self):
         return self._get_file_fullname_fullpath_by_our_name('assignments')
@@ -218,11 +234,24 @@ class FinickConfig(object):
 
     def _process_args(self, parsed_args):
 
+        # ---------- Process the '-t' command-line option: ----------
+        try:
+            if parsed_args.print_todos is not None and len(
+                parsed_args.print_todos) > 0:
+                self.__only_todos_for = parsed_args.print_todos[0]
+        except AttributeError:
+            self.__only_todos_for = ''
+
         # ---------- Process the '-n' command-line option: ----------
         try:
             self.__only_maint = (parsed_args.no_session == True)
         except AttributeError:
             self.__only_maint = False
+
+        # ---------- Enforce mutual exclusivity of -n and -t: -------
+        if len(self.__only_todos_for) > 0 and self.__only_maint:
+            raise FinickError(
+                '\'-t\' and \'-n\' are mutually exclusive. Use one or the other -- not both!')
 
         # ---------- Process the '[commits [commits ...]]' command-line option:
         try:
@@ -234,9 +263,11 @@ class FinickConfig(object):
                     raise FinickError(
                         'Command-line argument for commits requested was turned into an empty list.')
 
-                if self.__only_maint:
+                if self.__only_maint or len(self.__only_todos_for) > 0:
                     raise FinickError(
-                        'You cannot both use the \'-n\' flag and list requested commits (for a session) at the same time.')
+                        'You cannot use the \'-n\' flag (or \'-t\' flag) while '
+                        + 'also providing a list of requested commits (for a '
+                        + 'session) at the same time.')
 
                 self.__requests = parsed_args.commits
 

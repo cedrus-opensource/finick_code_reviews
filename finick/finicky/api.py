@@ -35,8 +35,17 @@ def prelaunch_checklist_open(calling_filename):
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-n", "--no-session",
-        help="update the db file, output todos, but do not start a session",
+        help=
+        "update the db file, output your todos, but do not start a session. "
+        "(this is especially helpful when you need the db txt file to contain "
+        "your latest commit hashes, so you can attach a file-comment to one of them.)",
         action="store_true")
+    parser.add_argument(
+        "-t", "--print-todos",
+        nargs=1,
+        metavar="TODO_DEBTOR",
+        help="output todos of the TODO_DEBTOR, but do not start a session",
+        action="store")
     parser.add_argument(
         "commits",
         nargs='*',
@@ -108,7 +117,8 @@ def finick_preopen_session(finick_config, db_handle):
 
     assignments = db_handle.generate_assignments_for_this_session(finick_config)
 
-    todos_n_pleases = db_handle.generate_todos_for(finick_config.reviewer)
+    # the config will compute whether the debtor is the reviewer or otherwise, based on settings/flags:
+    todos_n_pleases = db_handle.generate_todos_for(finick_config.todo_debtor)
 
     wrapper_helper = SessionRowPrinter(finick_config, assignments,
                                        todos_n_pleases)
