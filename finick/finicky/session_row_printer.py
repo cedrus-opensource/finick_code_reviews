@@ -29,7 +29,12 @@ class SessionRowPrinter(object):
         return len(self.__assignmentlist) == 0
 
     def print_reminders(self):
-        if len(self.__todoslist) > 0:
+        if len(self.__todoslist) <= 0:
+            print('No TODOS created. There are ZERO reminders to print into ' +
+                  self.__finick_config.get_todos_file_fullname_fullpath() +
+                  ' (so the file was not created).')
+
+        else:
             t_list = []
             p_list = []
 
