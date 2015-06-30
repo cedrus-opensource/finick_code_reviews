@@ -188,6 +188,13 @@ class _DbRowsCollection(object):
                 if None != new_row:
                     # if the merge returned a new row, then add it
                     self.append_drow(new_row)
+                else:
+                    # we didn't get a new row. a revert failed. make sure we now have a TODO instead:
+                    if ar.row_type != ar.TYPE_TODO:
+                        raise FinickError(
+                            'Coding error. The OOPS for commit ' +
+                            ar.commithash +
+                            ' did not revert, so this row should show TODO instead of OOPS')
 
                 # either way (as OOPS or as TODO), this was one review:
                 work_count += 1

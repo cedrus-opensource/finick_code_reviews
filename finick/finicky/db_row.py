@@ -248,7 +248,9 @@ class DbRow(object):
     def merge_OOPS_row(self, assignment_row, reverthash, reason_to_hide,
                        git_driver_email):
         # if reverthash is empty (''), then the revert failed. we create a TODO instead.
-        # otherwise, mark our OOPS and also return the _NEW_ RVRT ROW
+        # otherwise, mark our OOPS and also return the _NEW_ RVRT ROW.
+        # Note: CALLING CODE EXPECTS A GUARANTEE that assignment_row.row_type will
+        # end up set to TYPE_TODO if we failed to revert the OOPS.
         new_row = None
 
         incoming_reviewer = self._choose_between_our_reviewer_string_and_ar(
@@ -256,6 +258,7 @@ class DbRow(object):
 
         if reverthash == '':
             # revert failed. make the OOPS a TODO instead.
+            # IMPORTANT: the next line MUTATES the passed-in arg 'assignment_row'
             assignment_row._DbRow__rowtype = assignment_row.TYPE_TODO
             self._merge_TODO_private_helper(assignment_row, incoming_reviewer)
         else:
