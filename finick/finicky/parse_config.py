@@ -218,11 +218,13 @@ class FinickConfig(object):
 
     def _process_args(self, parsed_args):
 
+        # ---------- Process the '-n' command-line option: ----------
         try:
             self.__only_maint = (parsed_args.no_session == True)
         except AttributeError:
             self.__only_maint = False
 
+        # ---------- Process the '[commits [commits ...]]' command-line option:
         try:
             if len(parsed_args.commits) > 0 and parsed_args.commits[0] is None:
                 # this means that no commit-requests (requested assignments) were given at the command line.
