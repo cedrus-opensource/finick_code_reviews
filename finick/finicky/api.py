@@ -25,6 +25,7 @@ http://www.wefearchange.org/2012/06/the-right-way-to-internationalize-your.html
 """
 
 import finicky.parse_config
+import finicky.email
 from finicky.db_file import DbTextFile, AssertType_DbTextFile
 from finicky.session_row_printer import SessionRowPrinter
 from finicky.error import FinickError
@@ -173,10 +174,16 @@ def finick_db_merge_with_completed_assignments(finick_config, db_handle):
             'to manually put the repo into the correct state.')
     else:
         # send email (email to remind todo items. todo items past certain date?)
+        sessionend_email_body = 'session ended'
 
         # commit session-end message, push all to origin reviews branch
         finicky.gitting.git_perform_session_completion_commit(finick_config,
                                                               work_count)
+
+        finicky.email.send_the_sessionend_email(
+            ['kkheller@cedrus.com'
+             ], 'pytest of rough send_the_sessionend_email',
+            sessionend_email_body, finick_config)
 
         # push whatever possible to zero branch
 
