@@ -455,12 +455,12 @@ class DbTextFile(object):
 
         return results
 
-    def generate_todos_for_this_session(self, finick_config):
+    def generate_todos_for(self, user_identity):
 
         # we need to care about TYPE_TODO and TYPE_PLS.
-        # find rows of those types where the *committer* is the same as current session driver
+        # find rows of those types where the *committer* is the same as 'user_identity'
         return self.__rowcollection.find_todos_and_please_requests(
-            finick_config.reviewer)
+            user_identity)
 
     def merge_completed_assignments(self, assign_file):
 

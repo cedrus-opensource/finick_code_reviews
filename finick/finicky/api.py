@@ -108,7 +108,7 @@ def finick_preopen_session(finick_config, db_handle):
 
     assignments = db_handle.generate_assignments_for_this_session(finick_config)
 
-    todos_n_pleases = db_handle.generate_todos_for_this_session(finick_config)
+    todos_n_pleases = db_handle.generate_todos_for(finick_config.reviewer)
 
     wrapper_helper = SessionRowPrinter(finick_config, assignments,
                                        todos_n_pleases)
