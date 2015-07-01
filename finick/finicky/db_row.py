@@ -42,6 +42,15 @@ class DbRow(object):
     def _get_my_string(self):
         return self._convert_rowtype_constant_to_string(self.row_type)
 
+    def _get_cleancomment(self):
+        rslt = self.__action_comment
+        if rslt.startswith(self.__ACTION_COMMENT_CHAR):
+            rslt = rslt[1:]
+
+        rslt = rslt.lstrip()
+
+        return rslt
+
     def __init__(self, is_dummy,
                  string_to_parse='',
                  file_comment='',
@@ -125,6 +134,8 @@ class DbRow(object):
     committer  = property(lambda s : s.__committer,  _fail_setter)
 
     commithash = property(lambda s : s.__commit_hash,_fail_setter)
+
+    cleancomment = property( _get_cleancomment,      _fail_setter)
 
     comment    = property(lambda s : s.__action_comment, _fail_setter)
 
