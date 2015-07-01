@@ -39,6 +39,9 @@ class DbRow(object):
         raise FinickError(
             "The value you are trying to assign to in DbRow is read-only.")
 
+    def _get_my_string(self):
+        return self._convert_rowtype_constant_to_string(self.row_type)
+
     def __init__(self, is_dummy,
                  string_to_parse='',
                  file_comment='',
@@ -114,6 +117,8 @@ class DbRow(object):
 
 
     row_type   = property(lambda s : s.__rowtype,    _fail_setter)
+
+    rtype_str  = property(   _get_my_string,         _fail_setter)
 
     todo_refs  = property(lambda s : s.__todo_refs,  _fail_setter)
 
