@@ -58,8 +58,6 @@ class RowPrinterForSessionStart(object):
                 o += '    Must Fix:\n\n'
 
             for t in t_list:
-                ch = t.commithash
-                cm = t.comment
                 o += '      commit ' + t.commithash + ', ' + t.comment + '\n'
 
             if len(t_list) > 0:
@@ -67,8 +65,6 @@ class RowPrinterForSessionStart(object):
                 o += '    Requested kindly:\n\n'
 
             for p in p_list:
-                ch = p.commithash
-                cm = p.comment
                 o += '      commit ' + p.commithash + ', ' + p.comment + '\n'
 
             # using a 'contrived' if-test so that the 'print's all line up
