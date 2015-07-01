@@ -146,12 +146,23 @@ class _DbRowsCollection(object):
 
         return commithash_str in self.__lookup_short_hash
 
+    def _map_summary_rows_by_author(self, summary_rows):
+        the_map = {}
+        for sr in summary_rows:
+            if sr.committer not in the_map:
+                the_map[sr.committer] = []
+
+            # each 'sr' is already a deep-copy, so no need to deepcopy here:
+            the_map[sr.committer].append(sr)
+
+        return the_map, len(summary_rows)
+
     def merge_completed_assignments(self, assign_file, finick_config):
         AssertType_DbTextFile(assign_file)
 
         assign_rows = assign_file._DbTextFile__rowcollection._DbRowsCollection__rows
 
-        work_count = 0
+        summary_rows = []
 
         # REMEMBER! we read in the completed assignments file backwards! newest commits first!
         for ar in assign_rows:
@@ -167,8 +178,11 @@ class _DbRowsCollection(object):
             # if 'ar' is still in row_type 'NOW', then put it back to 'WAIT'
             # other valid values for ar type: OK, FIXD, TODO, PLS, OOPS
             if ar.row_type != ar.TYPE_OOPS:
-                work_count += our_row.merge_with_completed_assignment_all_cases_except_OOPS(
+                work_count = our_row.merge_with_completed_assignment_all_cases_except_OOPS(
                     ar, self.short_commithash_is_known_in_collection)
+
+                if work_count > 0:
+                    summary_rows.append(copy.deepcopy(ar))
 
             elif ar.row_type == ar.TYPE_OOPS:
                 # OOPS is the tricky case. we try a clean revert. if it fails, we use TODO instead.
@@ -197,13 +211,13 @@ class _DbRowsCollection(object):
                             ' did not revert, so this row should show TODO instead of OOPS')
 
                 # either way (as OOPS or as TODO), this was one review:
-                work_count += 1
+                summary_rows.append(copy.deepcopy(ar))
 
             else:
                 raise FinickError(
                     'Invalid incoming assignment row type while trying to merge completed assignments.')
 
-        return work_count
+        return self._map_summary_rows_by_author(summary_rows)
 
 
 def AssertType_DbTextFile(o):

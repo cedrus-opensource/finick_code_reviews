@@ -25,9 +25,8 @@ http://www.wefearchange.org/2012/06/the-right-way-to-internationalize-your.html
 """
 
 import finicky.parse_config
-import finicky.email
 from finicky.db_file import DbTextFile, AssertType_DbTextFile
-from finicky.session_row_printer import RowPrinterForSessionStart
+from finicky.session_row_printer import RowPrinterForSessionStart, RowPrinterSessionEndSummary
 from finicky.error import FinickError
 
 
@@ -161,7 +160,8 @@ def finick_db_merge_with_completed_assignments(finick_config, db_handle):
     db_handle.add_new_commits()
 
     # note: the rows from assignments might be mutated after this call:
-    work_count = db_handle.merge_completed_assignments(assign_fhandle)
+    summary_map, work_count = db_handle.merge_completed_assignments(
+        assign_fhandle)
 
     # mark ##__forefront__## position in reviews file
 
@@ -183,6 +183,16 @@ def finick_db_merge_with_completed_assignments(finick_config, db_handle):
             'manually, and either use \'git push\' or \'git reset\' ' +
             'to manually put the repo into the correct state.')
     else:
+        # in addition to the summary_map, we must prepare a TODO-map for the printer, too:
+        prior_todo_map = {}
+        for committer in summary_map:
+            prior_todo_map[committer] = db_handle.generate_todos_for(committer)
+
+        # prepare email messages. (do this BEFORE the final git commands, so we have this even if git fails)
+        summary_printer = RowPrinterSessionEndSummary(
+            finick_config, summary_map, prior_todo_map)
+        summary_printer.prepare_email_messages()
+
         # send email (email to remind todo items. todo items past certain date?)
         sessionend_email_body = 'session ended'
 
@@ -190,10 +200,9 @@ def finick_db_merge_with_completed_assignments(finick_config, db_handle):
         finicky.gitting.git_perform_session_completion_commit(finick_config,
                                                               work_count)
 
-        finicky.email.send_the_sessionend_email(
-            ['kkheller@cedrus.com'
-             ], 'pytest of rough send_the_sessionend_email',
-            sessionend_email_body, finick_config)
+        # now that stuff did indeed get pushed, send the emails.
+        # (if git commands failed, the user can fall back on files saved during prepare_email_messages)
+        summary_printer.send_prepared_email_messages()
 
         # push whatever possible to zero branch
 
