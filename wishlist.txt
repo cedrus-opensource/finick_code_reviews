@@ -1,0 +1,23 @@
+
+
+
+when the session-end summary email is sent, CC the reviewer. (could be configurable in mail config)
+
+DbTextFile::purge_older_reviewed_commits is not implemented yet.
+
+finick/forefront.py is not implemented yet.
+
+Need to look into converting per-instance 'constants' (like self.__ACTION_COMMENT_CHAR) into per-class.
+
+
+[for main ini file] specify a string as the 'tag' in email subject-lines.
+
+
+[for email config file] specify the desired FROM email address.
+
+[for email config file] specify a CC or a BCC list.
+
+
+[low] be able to run with '-t' even if a session is already started (and in progress).
+
+[low] ability to disable all email.

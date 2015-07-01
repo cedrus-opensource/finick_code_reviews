@@ -55,4 +55,5 @@ symbolic link created for finick <<===>> g:\your\path\finick_code_reviews\finick
 9. in the .gitignore, you also want to ignore these temp-files:
 code_reviews/assignments*
 code_reviews/todo*
+code_reviews/*summarymail*
 
