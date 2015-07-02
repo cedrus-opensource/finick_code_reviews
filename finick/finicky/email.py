@@ -14,6 +14,8 @@ def send_the_sessionend_email(to_list, subject_line, email_body_text,
 
     AssertType_FinickConfig(finick_config)
 
+    CC_LIST = [finick_config.reviewer]
+
     SERVER = finick_config.mailserver
     PORT = finick_config.mailport
 
@@ -29,10 +31,11 @@ def send_the_sessionend_email(to_list, subject_line, email_body_text,
     message = """\
 From: %s
 To: %s
+CC: %s
 Subject: %s
 
 %s
-    """ % (FROM, ", ".join(TO), SUBJECT, TEXT)
+    """ % (FROM, ", ".join(TO), ", ".join(CC_LIST), SUBJECT, TEXT)
 
     try:
         # class smtplib.SMTP([host[, port[, local_hostname[, timeout]]]])
@@ -43,7 +46,8 @@ Subject: %s
         server.ehlo(
         )  # this line is apparently necessary on python 2.4 and 2.5, but not afterward.
         server.login(finick_config.maillogin, finick_config.mailpword)
-        server.sendmail(FROM, TO, message)
+        # important! you have to tell the server to send to the 'TO' list *and* the cc'ed folk:
+        server.sendmail(FROM, TO + CC_LIST, message)
         server.quit()
 
     except:
