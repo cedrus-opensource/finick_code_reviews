@@ -7,6 +7,7 @@ import glob
 import gettext
 import locale
 import argparse
+import copy
 
 # Set up message catalog access.
 # Python-3.4.3//Tools/i18n/pygettext.py finick/finicky/*py *py finick/*py # to generate pot
@@ -159,6 +160,9 @@ def finick_db_merge_with_completed_assignments(finick_config, db_handle):
     # (we know AT LEAST ONE commit happened: the CommitStringStartSession commit)
     db_handle.add_new_commits()
 
+    # save a copy BEFORE calling the 'merge' operation. this enables us to create the correct prior_todo_map later.
+    premerge_handle = copy.deepcopy(db_handle)
+
     # note: the rows from assignments might be mutated after this call:
     summary_map, work_count = db_handle.merge_completed_assignments(
         assign_fhandle)
@@ -186,7 +190,8 @@ def finick_db_merge_with_completed_assignments(finick_config, db_handle):
         # in addition to the summary_map, we must prepare a TODO-map for the printer, too:
         prior_todo_map = {}
         for committer in summary_map:
-            prior_todo_map[committer] = db_handle.generate_todos_for(committer)
+            prior_todo_map[committer] = premerge_handle.generate_todos_for(
+                committer)
 
         # prepare email messages. (do this BEFORE the final git commands, so we have this even if git fails)
         summary_printer = RowPrinterSessionEndSummary(
