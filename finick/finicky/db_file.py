@@ -127,6 +127,8 @@ class _DbRowsCollection(object):
                 self.append_drow(ir)
         else:
 
+            count_fresh = 0
+            type_was_hide = False
             newrows_i = -1
 
             for ir in incoming_rows:
@@ -134,8 +136,19 @@ class _DbRowsCollection(object):
                 prior_db_copy = self.find_commit_prestored(ir.commithash)
                 if prior_db_copy != None:
                     incoming_rows[newrows_i] = prior_db_copy
+                else:
+                    count_fresh += 1
+                    type_was_hide = ir.row_type == ir.TYPE_HIDE
 
-            self._replace_whole_collection(incoming_rows)
+            any_significant_change = True
+
+            # special case: we ignore updates if there is only 1 new row and it is a HIDE type.
+            # (this lets you run -d over and over without continually adding new maintenance commits)
+            if count_fresh == 1 and type_was_hide:
+                any_significant_change = False
+
+            if any_significant_change:
+                self._replace_whole_collection(incoming_rows)
 
     def short_commithash_is_known_in_collection(self, commithash_str):
         dr = DbRow.dummyinstance()

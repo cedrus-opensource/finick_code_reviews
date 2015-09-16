@@ -373,7 +373,8 @@ def git_perform_maintenance_commit(finick_config):
 
         c_success = True
     except FinickError:
-        print('Warning: unable to complete a maintenance commit.')
+        print(
+            'Warning: unable to complete a maintenance commit. There may have simply been no changes to the db file.')
 
     if c_success:
         _git_push(finick_config)
