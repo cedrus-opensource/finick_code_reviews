@@ -195,9 +195,8 @@ class _DbRowsCollection(object):
                     finick_config, ar.commithash, ar.comment)
 
                 # the merge function will decide (based on reverthash) whether to merge as TODO or OOPS
-                new_row = our_row.merge_OOPS_row(ar, reverthash,
-                                                 reason_to_hide,
-                                                 finick_config.reviewer)
+                new_row = our_row.merge_OOPS_row(
+                    ar, reverthash, reason_to_hide, finick_config.reviewer)
 
                 if None != new_row:
                     # if the merge returned a new row, then add it
@@ -239,7 +238,9 @@ class DbTextFile(object):
     @classmethod
     def create_from_file_rows_reversed(cls, finick_config,
                                        filename_w_fullpath):
-        return cls(False, finick_config, filename_w_fullpath,
+        return cls(False,
+                   finick_config,
+                   filename_w_fullpath,
                    is_session_starting=False,
                    reverse_the_rows=True)
 
@@ -247,7 +248,8 @@ class DbTextFile(object):
     def dummyinstance(cls):
         return cls(True)
 
-    def __init__(self, is_dummy,
+    def __init__(self,
+                 is_dummy,
                  finick_config=None,
                  filename_w_fullpath='',
                  is_session_starting=False,
@@ -402,9 +404,9 @@ class DbTextFile(object):
         if linetext == self.__CURR_VERSION_STRING:
             self.__version_from_fileread = 0
         else:
-            err_msg = str('Current version of finick db_file (' +
-                          str(self.__CURR_FILE_VER) +
-                          ') cannot parse file version: ' + linetext)
+            err_msg = str('Current version of finick db_file (' + str(
+                self.__CURR_FILE_VER) + ') cannot parse file version: ' +
+                          linetext)
             raise FinickError(err_msg)
 
     def flush_back_to_disk(self):
@@ -461,7 +463,8 @@ class DbTextFile(object):
 
     def abort_current_assignments(self, finick_config):
 
-        return self.__rowcollection.find_then_reverse_assignments(finick_config)
+        return self.__rowcollection.find_then_reverse_assignments(
+            finick_config)
 
     def generate_assignments_for_this_session(self, finick_config):
 

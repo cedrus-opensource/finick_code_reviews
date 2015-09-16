@@ -33,8 +33,8 @@ class RowPrinterForSessionStart(object):
     def print_reminders(self):
         if len(self.__todoslist) <= 0:
             print('No TODOS created. There are ZERO reminders to print into ' +
-                  self.__finick_config.get_todos_file_fullname_fullpath() +
-                  ' (so the file was not created).')
+                  self.__finick_config.get_todos_file_fullname_fullpath(
+                  ) + ' (so the file was not created).')
 
         else:
             t_list = []
@@ -73,7 +73,8 @@ class RowPrinterForSessionStart(object):
             if True:
                 o += '\n'
 
-            todos_file = self.__finick_config.get_todos_file_fullname_fullpath()
+            todos_file = self.__finick_config.get_todos_file_fullname_fullpath(
+            )
 
             # show the user the text right away (via the print function), and then also save to a file.
             print(o)

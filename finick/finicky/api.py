@@ -13,8 +13,7 @@ import copy
 # Python-3.4.3//Tools/i18n/pygettext.py finick/finicky/*py *py finick/*py # to generate pot
 # The hard-coded path is lame. This is a version 0.0 kind of thing.
 # make sure this is called as finick/start.py (use os.sep). this way we can count on CWD for finding locale folder
-_t = gettext.translation('finick_code_review', './finick/locale',
-                         ['en_US'])  #, fallback=True)
+_t = gettext.translation('finick_code_review', './finick/locale', ['en_US'])  #, fallback=True)
 try:
     # for older python 2:
     _ = _t.ugettext
@@ -34,14 +33,16 @@ from finicky.error import FinickError
 def prelaunch_checklist_open(calling_filename):
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-n", "--no-session",
+        "-n",
+        "--no-session",
         help=
         "update the db file, output your todos, but do not start a session. "
         "(this is especially helpful when you need the db txt file to contain "
         "your latest commit hashes, so you can attach a file-comment to one of them.)",
         action="store_true")
     parser.add_argument(
-        "-t", "--print-todos",
+        "-t",
+        "--print-todos",
         nargs=1,
         metavar="TODO_DEBTOR",
         help="output todos of the TODO_DEBTOR, but do not start a session",
@@ -115,7 +116,8 @@ def finick_preopen_session(finick_config, db_handle):
     db_handle.purge_older_reviewed_commits()
     db_handle.add_new_commits()
 
-    assignments = db_handle.generate_assignments_for_this_session(finick_config)
+    assignments = db_handle.generate_assignments_for_this_session(
+        finick_config)
 
     # the config will compute whether the debtor is the reviewer or otherwise, based on settings/flags:
     todos_n_pleases = db_handle.generate_todos_for(finick_config.todo_debtor)

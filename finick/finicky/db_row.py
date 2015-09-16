@@ -51,7 +51,8 @@ class DbRow(object):
 
         return rslt
 
-    def __init__(self, is_dummy,
+    def __init__(self,
+                 is_dummy,
                  string_to_parse='',
                  file_comment='',
                  gitt_tuple=None,
@@ -296,8 +297,7 @@ class DbRow(object):
         return new_row
 
     def merge_with_completed_assignment_all_cases_except_OOPS(
-        self, assignment_row, ref_checker_func
-    ):
+        self, assignment_row, ref_checker_func):
         # if 'ar' is still in row_type 'NOW', then put it back to 'WAIT'
         # other valid values for ar type: OK, FIXD, TODO, PLS, OOPS.
         # (currently, this function explicitly refuses to handle OOPS)
@@ -319,8 +319,8 @@ class DbRow(object):
         # for brevity:
         ar = assignment_row
 
-        assignment_is_deferred = (ar.row_type == ar.TYPE_NOW or
-                                  ar.row_type == ar.TYPE_WAIT)
+        assignment_is_deferred = (
+            ar.row_type == ar.TYPE_NOW or ar.row_type == ar.TYPE_WAIT)
 
         if ar.row_type == self.__rowtype:
             # row type not being changed, so do not count as work:
@@ -342,8 +342,7 @@ class DbRow(object):
 
         elif ar.row_type == ar.TYPE_FIXD:
             # Note: FIXD rows are required to have at least one valid todo-ref
-            self._store_incoming_todo_refs(ar, ref_checker_func
-                                           )  # this might throw an exception
+            self._store_incoming_todo_refs(ar, ref_checker_func)  # this might throw an exception
             self.__rowtype = self.TYPE_FIXD
             self.__reviewer = incoming_reviewer
             self.__action_comment = ar.comment
@@ -428,7 +427,7 @@ class DbRow(object):
 
             # if the comma separated list also ENDED in a final comma, we a get a spurious extra item
             if len(self.__todo_refs) > 0 and self.__todo_refs[len(
-                self.__todo_refs) - 1] == '':
+                    self.__todo_refs) - 1] == '':
                 self.__todo_refs.pop()
 
     def _initialize_from_tuple(self, gitt_tuple):
@@ -467,8 +466,7 @@ class DbRow(object):
         # see comments in gitting.py about our timezone issues. again,
         # for now, date strings are just a 'courtesy', not hard data.
         self.__commit_datestr = date_obj.strftime(
-            "%Y-%m-%d_%H:%M:%S"
-        )  # format duplicated in _initialize_from_map
+            "%Y-%m-%d_%H:%M:%S")  # format duplicated in _initialize_from_map
 
     def _initialize_from_map(self, internal_map):
         """
@@ -481,8 +479,7 @@ class DbRow(object):
                        """
         # we have to handle our today's date
         self.__commit_datestr = datetime.datetime.now().strftime(
-            "%Y-%m-%d_%H:%M:%S"
-        )  # format duplicated in _initialize_from_tuple
+            "%Y-%m-%d_%H:%M:%S")  # format duplicated in _initialize_from_tuple
 
         self.__committer = internal_map['__committer']
         self.__commit_hash = internal_map['__commit_hash']
@@ -554,7 +551,7 @@ class DbRow(object):
         # note: in order to have a comment, we MUST have a reviewer! even if the reviewer is '..nobody..'
         if self.__action_comment != '':
             if not self.__action_comment.startswith(
-                self.__ACTION_COMMENT_CHAR):
+                    self.__ACTION_COMMENT_CHAR):
                 raise FinickError(
                     'We always expect __ACTION_COMMENT_CHAR to have been prepended by now.')
 

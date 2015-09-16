@@ -237,7 +237,7 @@ class FinickConfig(object):
         # ---------- Process the '-t' command-line option: ----------
         try:
             if parsed_args.print_todos is not None and len(
-                parsed_args.print_todos) > 0:
+                    parsed_args.print_todos) > 0:
                 self.__only_todos_for = parsed_args.print_todos[0]
         except AttributeError:
             self.__only_todos_for = ''
