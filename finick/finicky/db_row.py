@@ -123,6 +123,8 @@ class DbRow(object):
 
     commithash   = property(lambda s : s.__commit_hash,_fail_setter)
 
+    reviewer     = property(lambda s : s.__reviewer,   _fail_setter)
+
     cleancomment = property(   _get_cleancomment,      _fail_setter)
 
     comment      = property(lambda s : s.__action_comment, _fail_setter)
