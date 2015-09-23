@@ -7,7 +7,6 @@ DbTextFile::purge_older_reviewed_commits is not implemented yet.
 
 finick/forefront.py is not implemented yet.
 
-Need to look into converting per-instance 'constants' (like self.__ACTION_COMMENT_CHAR) into per-class.
 
 
 [for main ini file] specify a string as the 'tag' in email subject-lines.

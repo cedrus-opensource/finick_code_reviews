@@ -17,6 +17,11 @@ def AssertType_DbRow(o):
             + incoming_type)
 
 
+def _fail_setter(self, value):
+    raise FinickError(
+        "The value you are trying to assign to in DbRow is read-only.")
+
+
 class DbRow(object):
     @classmethod
     def dummyinstance(cls):
@@ -35,16 +40,12 @@ class DbRow(object):
     def _create_from_internal_map(cls, the_map):
         return cls(False, '', '', None, the_map)
 
-    def _fail_setter(self, value):
-        raise FinickError(
-            "The value you are trying to assign to in DbRow is read-only.")
-
     def _get_my_string(self):
         return self._convert_rowtype_constant_to_string(self.row_type)
 
     def _get_cleancomment(self):
         rslt = self.__action_comment
-        if rslt.startswith(self.__ACTION_COMMENT_CHAR):
+        if rslt.startswith(self.ACTION_COMMENT_CHAR):
             rslt = rslt[1:]
 
         rslt = rslt.lstrip()
@@ -58,24 +59,6 @@ class DbRow(object):
                  gitt_tuple=None,
                  internal_map=None):
 
-        self.__ACTION_COMMENT_CHAR = '#'
-
-        # we rely heavily on knowing they are length 10. (rely on this fact for string equality testing)
-        self.__LENGTH_TODOREF_HASH = 10
-
-        self.__TYPE_ERRORTYPE = -1
-        # yapf: disable
-        self.__TYPE_OK   =  1  # reviewer approved/accepted the commit
-        self.__TYPE_OOPS =  2  # reviewer rejected the commit
-        self.__TYPE_WAIT =  3  # not yet reviewed. awaiting review.
-        self.__TYPE_FIXD =  4  # means both approval and the commit closes a PLS ('please' request) or a TODO
-        self.__TYPE_TODO =  5  # reviewer defers the commit, contingent upon further items being addressed
-        self.__TYPE_HIDE =  6  # a commit that is 'null' for reviewing purposes. hidden/excluded from the process.
-        self.__TYPE_NOW  =  7  # assigned for review during the current active session
-        self.__TYPE_PLS  =  8  # (short for 'please'). like todo, only we accept the commit, but with further requests for later.
-        self.__TYPE_RVRT =  9  # a revert/reversal that is accepted and addresses a prior OOPS
-        # yapf: enable
-
         self.__creator = ''  # this variable is intended only for debugging/tracing
 
         self.__file_comment = file_comment
@@ -84,9 +67,9 @@ class DbRow(object):
         # see comments in gitting.py about our timezone issues. again,
         # for now, date strings are just a 'courtesy', not hard data.
         self.__commit_datestr = ''
-        self.__rowtype = self.__TYPE_ERRORTYPE
+        self.__rowtype = self.TYPE_ERRORTYPE
         self.__reviewer = ''
-        # each todo ref will be the FIRST few chars of a hash. always length __LENGTH_TODOREF_HASH
+        # each todo ref will be the FIRST few chars of a hash. always length DbRow.SHORT_H_SIZE
         self.__todo_refs = []
         self.__action_comment = ''
         # at some point we might need more structure, like a forefront DATETIME object:
@@ -103,28 +86,6 @@ class DbRow(object):
             self._initialize_from_string(string_to_parse)
 
     # yapf: disable
-
-    TYPE_OK    = property(lambda s : s.__TYPE_OK,    _fail_setter)
-
-    TYPE_OOPS  = property(lambda s : s.__TYPE_OOPS,  _fail_setter)
-
-    TYPE_WAIT  = property(lambda s : s.__TYPE_WAIT,  _fail_setter)
-
-    TYPE_FIXD  = property(lambda s : s.__TYPE_FIXD,  _fail_setter)
-
-    TYPE_TODO  = property(lambda s : s.__TYPE_TODO,  _fail_setter)
-
-    TYPE_HIDE  = property(lambda s : s.__TYPE_HIDE,  _fail_setter)
-
-    TYPE_NOW   = property(lambda s : s.__TYPE_NOW,   _fail_setter)
-
-    TYPE_PLS   = property(lambda s : s.__TYPE_PLS,   _fail_setter)
-
-    TYPE_RVRT  = property(lambda s : s.__TYPE_RVRT,  _fail_setter)
-
-    # this means "short HASH size". We always store the todo-ref hashes in the same specific size string.
-    SHORT_H_SIZE = property(lambda s : s.__LENGTH_TODOREF_HASH, _fail_setter)
-
 
     row_type   = property(lambda s : s.__rowtype,    _fail_setter)
 
@@ -143,23 +104,23 @@ class DbRow(object):
     # yapf: enable
 
     def _convert_rowtype_constant_to_string(self, rowtype_int):
-        if rowtype_int == self.__TYPE_OK:
+        if rowtype_int == self.TYPE_OK:
             return 'OK'
-        elif rowtype_int == self.__TYPE_OOPS:
+        elif rowtype_int == self.TYPE_OOPS:
             return 'OOPS'
-        elif rowtype_int == self.__TYPE_WAIT:
+        elif rowtype_int == self.TYPE_WAIT:
             return 'WAIT'
-        elif rowtype_int == self.__TYPE_FIXD:
+        elif rowtype_int == self.TYPE_FIXD:
             return 'FIXD'
-        elif rowtype_int == self.__TYPE_TODO:
+        elif rowtype_int == self.TYPE_TODO:
             return 'TODO'
-        elif rowtype_int == self.__TYPE_HIDE:
+        elif rowtype_int == self.TYPE_HIDE:
             return 'HIDE'
-        elif rowtype_int == self.__TYPE_NOW:
+        elif rowtype_int == self.TYPE_NOW:
             return 'NOW'
-        elif rowtype_int == self.__TYPE_PLS:
+        elif rowtype_int == self.TYPE_PLS:
             return 'PLS'
-        elif rowtype_int == self.__TYPE_RVRT:
+        elif rowtype_int == self.TYPE_RVRT:
             return 'RVRT'
         else:
             err = 'Invalid row type: ' + str(rowtype_int)
@@ -167,23 +128,23 @@ class DbRow(object):
 
     def _convert_string_to_rowtype_constant(self, rowtype_string, linetext):
         if rowtype_string == 'OK':
-            return self.__TYPE_OK
+            return self.TYPE_OK
         elif rowtype_string == 'OOPS':
-            return self.__TYPE_OOPS
+            return self.TYPE_OOPS
         elif rowtype_string == 'WAIT':
-            return self.__TYPE_WAIT
+            return self.TYPE_WAIT
         elif rowtype_string == 'FIXD':
-            return self.__TYPE_FIXD
+            return self.TYPE_FIXD
         elif rowtype_string == 'TODO':
-            return self.__TYPE_TODO
+            return self.TYPE_TODO
         elif rowtype_string == 'HIDE':
-            return self.__TYPE_HIDE
+            return self.TYPE_HIDE
         elif rowtype_string == 'NOW':
-            return self.__TYPE_NOW
+            return self.TYPE_NOW
         elif rowtype_string == 'PLS':
-            return self.__TYPE_PLS
+            return self.TYPE_PLS
         elif rowtype_string == 'RVRT':
-            return self.__TYPE_RVRT
+            return self.TYPE_RVRT
         else:
             err = 'Invalid row type: ' + rowtype_string + ', on row: [' + linetext + ']'
             raise FinickError(err)
@@ -191,13 +152,13 @@ class DbRow(object):
     def assign_for_current_review_session(self, reviewer_email):
         """This function should always do 'the opposite' of cancel_assignment_for_current_review_session
         """
-        self.__rowtype = self.__TYPE_NOW
+        self.__rowtype = self.TYPE_NOW
         self.__reviewer = reviewer_email
 
     def cancel_assignment_for_current_review_session(self):
         """This function should always do 'the opposite' of assign_for_current_review_session
         """
-        self.__rowtype = self.__TYPE_WAIT
+        self.__rowtype = self.TYPE_WAIT
         self.__reviewer = ''
 
     def _store_incoming_todo_refs(self, assignment_row, ref_checker_func):
@@ -286,7 +247,7 @@ class DbRow(object):
             the_map = {
                 '__committer': git_driver_email,
                 '__commit_hash': reverthash,
-                '__rowtype': self.__TYPE_RVRT,
+                '__rowtype': self.TYPE_RVRT,
                 '__reviewer': incoming_reviewer,
                 '__todo_refs': [self.__commit_hash[0:self.SHORT_H_SIZE]],
                 '__action_comment': reason_to_hide
@@ -383,7 +344,7 @@ class DbRow(object):
             for _i_ in range(0, 5):
                 car_cdr = car_cdr[CDR].split(None, 1)
                 row_parts.append(car_cdr[CAR])
-                if car_cdr[CDR].startswith(self.__ACTION_COMMENT_CHAR):
+                if car_cdr[CDR].startswith(self.ACTION_COMMENT_CHAR):
                     row_parts.append(car_cdr[CDR])
                     break
 
@@ -420,7 +381,7 @@ class DbRow(object):
                 self.__todo_refs = row_parts[5].split(comma_sep)
                 self.__action_comment = row_parts[6]
             else:
-                if row_parts[5].startswith(self.__ACTION_COMMENT_CHAR):
+                if row_parts[5].startswith(self.ACTION_COMMENT_CHAR):
                     self.__action_comment = row_parts[5]
                 else:
                     self.__todo_refs = row_parts[5].split(comma_sep)
@@ -440,7 +401,7 @@ class DbRow(object):
         wants_to_hide = gitt_tuple[1]
         action_comment_string = gitt_tuple[
             2
-        ]  # at this point it should _NOT_ have __ACTION_COMMENT_CHAR yet!
+        ]  # at this point it should _NOT_ have ACTION_COMMENT_CHAR yet!
 
         c_hash, committer_eml, date_string, ignored_subject = gitt_tuple[0].split(
             COL_DELIM)
@@ -448,12 +409,12 @@ class DbRow(object):
         self.__committer = committer_eml
         self.__commit_hash = c_hash
         if len(action_comment_string) > 0:
-            self.__action_comment = self.__ACTION_COMMENT_CHAR + ' ' + action_comment_string
+            self.__action_comment = self.ACTION_COMMENT_CHAR + ' ' + action_comment_string
 
         if wants_to_hide:
-            self.__rowtype = self.__TYPE_HIDE
+            self.__rowtype = self.TYPE_HIDE
         else:
-            self.__rowtype = self.__TYPE_WAIT
+            self.__rowtype = self.TYPE_WAIT
 
         # we expect 'date_string' to be in RFC2822 style
         # Tue, 2 Feb 2010 22:22:56 +0000
@@ -472,7 +433,7 @@ class DbRow(object):
         """
             the_map = {'__committer': git_driver_email,
                        '__commit_hash': reverthash,
-                       '__rowtype': self.__TYPE_RVRT,
+                       '__rowtype': self.TYPE_RVRT,
                        '__reviewer': incoming_reviewer,
                        '__todo_refs':[self.__commit_hash[0:self.SHORT_H_SIZE]],
                        '__action_comment':reason_to_hide}
@@ -490,8 +451,8 @@ class DbRow(object):
 
         if len(self.__action_comment) > 0:
             if False == self.__action_comment.startswith(
-                self.__ACTION_COMMENT_CHAR):
-                self.__action_comment = self.__ACTION_COMMENT_CHAR + ' ' + self.__action_comment
+                self.ACTION_COMMENT_CHAR):
+                self.__action_comment = self.ACTION_COMMENT_CHAR + ' ' + self.__action_comment
 
     def set_forefront_marker(self, forefront_marker_string):
         if self.__forefront_string != '':
@@ -550,10 +511,9 @@ class DbRow(object):
 
         # note: in order to have a comment, we MUST have a reviewer! even if the reviewer is '..nobody..'
         if self.__action_comment != '':
-            if not self.__action_comment.startswith(
-                    self.__ACTION_COMMENT_CHAR):
+            if not self.__action_comment.startswith(self.ACTION_COMMENT_CHAR):
                 raise FinickError(
-                    'We always expect __ACTION_COMMENT_CHAR to have been prepended by now.')
+                    'We always expect ACTION_COMMENT_CHAR to have been prepended by now.')
 
         row_text += (self.__action_comment)
 
@@ -566,3 +526,26 @@ class DbRow(object):
 
         if self.__forefront_string != '':
             the_file.write(self.__forefront_string + '\n')
+
+
+
+# yapf: disable
+
+DbRow.ACTION_COMMENT_CHAR = property(lambda s: '#', _fail_setter)
+
+# SHORT_H_SIZE means "short HASH size". We always store the todo-ref hashes in the same specific size string.
+# we rely heavily on knowing they are length 10. (rely on this fact for string equality testing)
+DbRow.SHORT_H_SIZE   = property(lambda s:  10,   _fail_setter)
+
+DbRow.TYPE_ERRORTYPE = property(lambda s:  -1,   _fail_setter)
+DbRow.TYPE_OK        = property(lambda s:   1,   _fail_setter)  # reviewer approved/accepted the commit
+DbRow.TYPE_OOPS      = property(lambda s:   2,   _fail_setter)  # reviewer rejected the commit
+DbRow.TYPE_WAIT      = property(lambda s:   3,   _fail_setter)  # not yet reviewed. awaiting review.
+DbRow.TYPE_FIXD      = property(lambda s:   4,   _fail_setter)  # means both approval and the commit closes a PLS ('please' request) or a TODO
+DbRow.TYPE_TODO      = property(lambda s:   5,   _fail_setter)  # reviewer defers the commit, contingent upon further items being addressed
+DbRow.TYPE_HIDE      = property(lambda s:   6,   _fail_setter)  # a commit that is 'null' for reviewing purposes. hidden/excluded from the process.
+DbRow.TYPE_NOW       = property(lambda s:   7,   _fail_setter)  # assigned for review during the current active session
+DbRow.TYPE_PLS       = property(lambda s:   8,   _fail_setter)  # (short for 'please'). like todo, only we accept the commit, but with further requests for later.
+DbRow.TYPE_RVRT      = property(lambda s:   9,   _fail_setter)  # a revert/reversal that is accepted and addresses a prior OOPS
+
+# yapf: enable
