@@ -22,6 +22,19 @@ def _fail_setter(self, value):
         "The value you are trying to assign to in DbRow is read-only.")
 
 
+def _get_the_monday_matching_a_given_date(date_obj):
+    # http://stackoverflow.com/questions/5882405/get-date-from-iso-week-number-in-python
+    week_of_year = (date_obj.isocalendar()[1])
+    the_year = date_obj.year
+
+    ret = datetime.datetime.strptime('%04d-%02d-1' % (the_year, week_of_year),
+                                     '%Y-%W-%w')
+    if datetime.date(the_year, 1, 4).isoweekday() > 4:
+        ret -= datetime.timedelta(days=7)
+
+    return ret
+
+
 class DbRow(object):
     @classmethod
     def dummyinstance(cls):
@@ -39,6 +52,15 @@ class DbRow(object):
     @classmethod
     def _create_from_internal_map(cls, the_map):
         return cls(False, '', '', None, the_map)
+
+    def _get_dateobj(self):
+        # recall that __commit_datestr is formatted like so:
+        #"1970-03-01_01:01:01"
+        return datetime.datetime.strptime(self.__commit_datestr,
+                                          "%Y-%m-%d_%H:%M:%S")
+
+    def _get_monday(self):
+        return _get_the_monday_matching_a_given_date(self._get_dateobj())
 
     def _get_my_string(self):
         return self._convert_rowtype_constant_to_string(self.row_type)
@@ -87,19 +109,23 @@ class DbRow(object):
 
     # yapf: disable
 
-    row_type   = property(lambda s : s.__rowtype,    _fail_setter)
+    row_type     = property(lambda s : s.__rowtype,    _fail_setter)
 
-    rtype_str  = property(   _get_my_string,         _fail_setter)
+    rtype_str    = property(   _get_my_string,         _fail_setter)
 
-    todo_refs  = property(lambda s : s.__todo_refs,  _fail_setter)
+    commitdate   = property(   _get_dateobj,           _fail_setter)
 
-    committer  = property(lambda s : s.__committer,  _fail_setter)
+    prior_monday = property(   _get_monday,            _fail_setter)
 
-    commithash = property(lambda s : s.__commit_hash,_fail_setter)
+    todo_refs    = property(lambda s : s.__todo_refs,  _fail_setter)
 
-    cleancomment = property( _get_cleancomment,      _fail_setter)
+    committer    = property(lambda s : s.__committer,  _fail_setter)
 
-    comment    = property(lambda s : s.__action_comment, _fail_setter)
+    commithash   = property(lambda s : s.__commit_hash,_fail_setter)
+
+    cleancomment = property(   _get_cleancomment,      _fail_setter)
+
+    comment      = property(lambda s : s.__action_comment, _fail_setter)
 
     # yapf: enable
 
