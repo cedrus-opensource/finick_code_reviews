@@ -10,49 +10,92 @@ from finicky.error import FinickError
 import random
 
 
-class WeekGroup(object):
-    def get_week_label(self):
-        try:
-            self.aa += 1
-        except:
-            self.aa = 0
+class CalendarBucket(object):
+    def __init__(self, date_obj, commits_list, targeted_dev):
+        self.__datetime_obj = date_obj
+        self.__developer = targeted_dev
+        self.__commits_in_bucket_author = []
+        self.__commits_in_bucket_reviewer = []
 
-        return 'week-' + str(self.aa)
+        dr = DbRow.dummyinstance()
+        self.__oopsish_author = [dr.TYPE_OOPS, dr.TYPE_TODO]
+        self.__oopsish_rviewr = [dr.TYPE_OOPS, dr.TYPE_TODO, dr.TYPE_PLS]
 
-    def get_oopsish_by_author(self, author):
-        return random.randint(0, 100)
+        self.__hoorayish_author = [dr.TYPE_OK, dr.TYPE_FIXD, dr.TYPE_PLS]
+        self.__hoorayish_rviewr = [dr.TYPE_OK, dr.TYPE_FIXD]
 
-    def get_hoorayish_by_author(self, author):
-        return random.randint(0, 100)
+        self.__pending = [dr.TYPE_WAIT]
 
-    def get_waitcount_authored_by(self, author):
-        return random.randint(0, 100)
+        for commit in commits_list:
+            if commit.committer.lower() == self.__developer.lower():
+                self.__commits_in_bucket_author.append(commit)
 
-    def get_oopsish_by_reviewer(self, author):
-        return random.randint(0, 100)
+            #note: do _NOT_ use 'elif' !! self-review is possible.
+            # (meaning something where committer is 'a' could also have reviewer is 'a')
+            if commit.reviewer.lower() == self.__developer.lower():
+                self.__commits_in_bucket_reviewer.append(commit)
 
-    def get_hoorayish_by_reviewer(self, author):
-        return random.randint(0, 100)
+    def _count_filtered_by_types(self, what_to_filter, list_of_types):
+        rslt = 0
+        for commit in what_to_filter:
+            if commit.row_type in list_of_types:
+                rslt += 1
+
+        return rslt
+
+    def get_bucket_label(self):
+
+        return self.__datetime_obj.strftime("%Y-%m-%d")
+
+    def get_oopsish_by_author(self):
+
+        return self._count_filtered_by_types(self.__commits_in_bucket_author,
+                                             self.__oopsish_author)
+
+    def get_hoorayish_by_author(self):
+
+        return self._count_filtered_by_types(self.__commits_in_bucket_author,
+                                             self.__hoorayish_author)
+
+    def get_waitcount_authored_by(self):
+
+        return self._count_filtered_by_types(self.__commits_in_bucket_author,
+                                             self.__pending)
+
+    def get_oopsish_by_reviewer(self):
+
+        return self._count_filtered_by_types(self.__commits_in_bucket_reviewer,
+                                             self.__oopsish_rviewr)
+
+    def get_hoorayish_by_reviewer(self):
+
+        return self._count_filtered_by_types(self.__commits_in_bucket_reviewer,
+                                             self.__hoorayish_rviewr)
 
 
 class ChartGenerator(object):
-    def __init__(self, finick_config, assignments):
+    def __init__(self, finick_config, commits_map):
         self.__finick_config = finick_config
-        self.__assignmentlist = assignments
+        self.__aggregated_commit_lists = commits_map
 
         AssertType_FinickConfig(self.__finick_config)
 
-        for a in self.__assignmentlist:
-            AssertType_DbRow(a)
+        # each map key should be a date, and the mapped value is a list:
+        for map_key, val in self.__aggregated_commit_lists.items():
+            for list_item in val:
+                AssertType_DbRow(list_item)
 
-    def _stats_by_week(self,
-                       plotter,
-                       y_bottom_int,
-                       bar_width,
-                       bar_anchors,
-                       portions_a,
-                       portions_b,
-                       portions_c=[]):
+    def _stats_by_mapkey_buckets(self,
+                                 plotter,
+                                 y_bottom_int,
+                                 bar_width,
+                                 bar_anchors,
+                                 portions_a,
+                                 colorname_a,
+                                 portions_b,
+                                 colorname_b,
+                                 portions_c=[],
+                                 colorname_c=''):
         """
         Making a STACKED BAR CHART.
         """
@@ -80,20 +123,20 @@ class ChartGenerator(object):
         p1 = plotter.bar(bar_anchors,
                          portions_a,
                          bar_width,
-                         color='green',
+                         color=colorname_a,
                          bottom=bottom_0)
 
         p2 = plotter.bar(bar_anchors,
                          portions_b,
                          bar_width,
-                         color='orange',
+                         color=colorname_b,
                          bottom=bottom_1)
 
         if len(portions_c) > 0:
             p3 = plotter.bar(bar_anchors,
                              portions_c,
                              bar_width,
-                             color='red',
+                             color=colorname_c,
                              bottom=bottom_2)
 
         return high_bar
@@ -104,17 +147,27 @@ class ChartGenerator(object):
         import numpy
         import matplotlib.pyplot
 
-        target_developer = 'kh'
+        target_developer = 'fake@fake.com'
 
-        green_portion = []
-        yellow_portion = []
-        red_portion = []
+        barportion_0 = []  # oops as an author
+        barportion_1 = []  # hooray by author
+        barportion_2 = []  # still un-reviewed for this author
 
-        gold_portion = []
-        black_portion = []
+        oops_author_color = 'orangered'
+        hooray_author_color = 'palegreen'
+        unreviewed_color = '#DDDDDD'  # light grey
+
+        rviewr_barportion_0 = []  # oops *caught* while reviewing
+        rviewr_barportion_1 = []  # hoorays granted while reviewing
+
+        oops_reviewer_color = 'gold'
+        hooray_reviewer_color = 'khaki'
+
+        zoom_multiplier_auth = 1  # adjust this (upwards) if items reviewed dwarfs (dominates) items authored
+        zoom_multiplier_rvwr = 1  # adjust this (up) if items authored dominates the chart
 
         matplotlib.pyplot.clf()
-        bar_width = 1
+        bar_width = 2
         xlabel_shift = bar_width + 1
 
         bar_anchors = []
@@ -122,43 +175,50 @@ class ChartGenerator(object):
         wlabels = []
         label_right_anchors = []
 
-        # simulate 12 weeks
-        for each_week_num in range(0, 12):
+        # the keys are DATES. we want to SORT chronologically:
+        for map_key in sorted(self.__aggregated_commit_lists):
 
-            # this is just 'faking it' for now:
-            wg = WeekGroup()
+            bucket = CalendarBucket(map_key,
+                                    self.__aggregated_commit_lists[map_key],
+                                    target_developer)
 
-            bar_anchors += [(each_week_num + 1) * 5]
-            wlabels += [wg.get_week_label()]
-            label_right_anchors += [((each_week_num + 1) * 5) + xlabel_shift]
+            bucket_num = len(bar_anchors)
+            bar_anchors += [(bucket_num + 1) * 5]
+            wlabels += [bucket.get_bucket_label()]
+            label_right_anchors += [((bucket_num + 1) * 5) + xlabel_shift]
 
-            # height of green portion of the bar:
-            green_portion += [wg.get_oopsish_by_author(target_developer)]
+            # height of portion 0 of the bar:
+            barportion_0 += [bucket.get_oopsish_by_author() *
+                             zoom_multiplier_auth]
 
-            # units out of total height that will be yellow:
-            yellow_portion += [wg.get_hoorayish_by_author(target_developer)]
+            # units out of total height that be the color or portion 1:
+            barportion_1 += [bucket.get_hoorayish_by_author() *
+                             zoom_multiplier_auth]
 
-            red_portion += [wg.get_waitcount_authored_by(target_developer)]
+            barportion_2 += [bucket.get_waitcount_authored_by() *
+                             zoom_multiplier_auth]
 
-            # height of green portion of the bar:
-            gold_portion += [wg.get_oopsish_by_reviewer(target_developer)]
+            rviewr_barportion_0 += [bucket.get_oopsish_by_reviewer() *
+                                    zoom_multiplier_rvwr]
 
-            # units out of total height that will be yellow:
-            black_portion += [wg.get_hoorayish_by_reviewer(target_developer)]
+            rviewr_barportion_1 += [bucket.get_hoorayish_by_reviewer() *
+                                    zoom_multiplier_rvwr]
 
-        high_bar = self._stats_by_week(matplotlib.pyplot, 0, bar_width,
-                                       bar_anchors, green_portion,
-                                       yellow_portion, red_portion)
+        high_bar = self._stats_by_mapkey_buckets(
+            matplotlib.pyplot, 0, bar_width, bar_anchors, barportion_0,
+            oops_author_color, barportion_1, hooray_author_color, barportion_2,
+            unreviewed_color)
 
-        high_bar += 15
+        high_bar += 3
 
         matplotlib.pyplot.axhline(high_bar)
 
         label_position_for_lower_row = high_bar / 2
 
-        new_high_bar = self._stats_by_week(matplotlib.pyplot, high_bar,
-                                           bar_width, bar_anchors,
-                                           gold_portion, black_portion)
+        new_high_bar = self._stats_by_mapkey_buckets(
+            matplotlib.pyplot, high_bar, bar_width, bar_anchors,
+            rviewr_barportion_0, oops_reviewer_color, rviewr_barportion_1,
+            hooray_reviewer_color)
 
         label_position_for_upper_row = high_bar + (
             (new_high_bar - high_bar) / 2)
