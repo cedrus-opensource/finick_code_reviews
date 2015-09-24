@@ -102,9 +102,12 @@ Eventually we will likely need month-by-month and other variations.
 
                 # make a deep copy, so that nothing that edits assignments can edit our __rows:
                 results[map_key].append(copy.deepcopy(r))
-                if not r.committer in all_devs:
+                if r.committer == '' and r.reviewer == '':
+                    raise FinickError(
+                        'Row is missing both the reviewer and committer.')
+                if (r.committer != '') and (not r.committer in all_devs):
                     all_devs.append(r.committer)
-                if not r.reviewer in all_devs:
+                if (r.reviewer != '') and (not r.reviewer in all_devs):
                     all_devs.append(r.reviewer)
 
         return results, all_devs
