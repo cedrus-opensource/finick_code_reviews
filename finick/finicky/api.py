@@ -48,6 +48,15 @@ def prelaunch_checklist_open(calling_filename):
         help="output todos of the TODO_DEBTOR, but do not start a session",
         action="store")
     parser.add_argument(
+        "-d",
+        "--draw-charts",
+        help="Generates all available graphical charts (using matplotlib). "
+        "(this option will need refinements later, to select specific charts "
+        "and skip others.) This updates the db file. "
+        "The charts option will not start a session. (But it will print your "
+        "todos. Prepare to be nagged.)",
+        action="store_true")
+    parser.add_argument(
         "commits",
         nargs='*',
         default=[None],
@@ -127,6 +136,19 @@ def finick_preopen_session(finick_config, db_handle):
     return wrapper_helper
 
 
+def finick_create_charts(finick_config, db_handle):
+
+    # intentionally import this at the LAST POSSIBLE opportunity:
+    from finicky.chart_generator import ChartGenerator
+
+    map_by_week, list_of_devs = db_handle.get_human_driven_commits_aggregated_by_week(
+        finick_config)
+
+    chart_gen = ChartGenerator(finick_config, map_by_week, list_of_devs)
+
+    chart_gen.draw_charts()
+
+
 def finick_close_session_nothing_to_review(finick_config, db_handle):
 
     # when this is called there shouldn't be any NOW rows. no NOW markers to remove, right?
@@ -140,6 +162,10 @@ def finick_open_session(finick_config, db_handle):
     if finick_config.opt_nosession:
         raise FinickError(
             'Call to api open_session despite the no-session flag being set.')
+
+    if finick_config.opt_charts:
+        raise FinickError(
+            'Call to api open_session when we expected to only draw charts.')
 
     # do this AFTER generating assignments, so the 'NOW' markers can show up
     db_handle.flush_back_to_disk()

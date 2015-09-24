@@ -57,8 +57,8 @@ class _DbRowsCollection(object):
 
     def _configured_strategy_says_to_assign_this_row(self, finick_config,
                                                      dbrow):
-        # when running "start.py -n" , avoid creating any assignments at all:
-        if finick_config.opt_nosession:
+        # when running "start.py -n" (or -d), avoid creating any assignments at all:
+        if finick_config.opt_nosession or finick_config.opt_charts:
             return False
         elif len(finick_config.opt_requests) > 0:
             for req in finick_config.opt_requests:
@@ -84,6 +84,30 @@ class _DbRowsCollection(object):
                     results.append(copy.deepcopy(r))
 
         return results
+
+    def get_mapped_human_commits(self, finick_config):
+        """For now this does week-by-week aggregation (using prior_monday).
+Eventually we will likely need month-by-month and other variations.
+        """
+
+        results = {}
+        all_devs = []
+
+        for r in self.__rows:
+            # exclude commits that are 'machine-made' (done by finick):
+            if r.row_type != r.TYPE_HIDE and r.row_type != r.TYPE_RVRT:
+                map_key = r.prior_monday
+                if not map_key in results:
+                    results[map_key] = []
+
+                # make a deep copy, so that nothing that edits assignments can edit our __rows:
+                results[map_key].append(copy.deepcopy(r))
+                if not r.committer in all_devs:
+                    all_devs.append(r.committer)
+                if not r.reviewer in all_devs:
+                    all_devs.append(r.reviewer)
+
+        return results, all_devs
 
     def find_then_reverse_assignments(self, finick_config):
         """This function should always do 'the opposite' of find_then_mark_then_return_assignments
@@ -491,6 +515,10 @@ class DbTextFile(object):
                     'Unable to assign any of the requested commits you specified.')
 
         return results
+
+    def get_human_driven_commits_aggregated_by_week(self, finick_config):
+
+        return self.__rowcollection.get_mapped_human_commits(finick_config)
 
     def generate_todos_for(self, user_identity):
 

@@ -44,6 +44,7 @@ class FinickConfig(object):
         self.__invoker_eml = ''
         self.__only_maint = False
         self.__only_todos_for = ''
+        self.__charts = False
         self.__requests = []
         self.__mailserver = ''
         self.__mailport = 0
@@ -143,6 +144,8 @@ class FinickConfig(object):
     opt_requests  = property(lambda s : s.__requests,   _fail_setter)
 
     opt_onlytodos = property(  _printing_todos,         _fail_setter)
+
+    opt_charts    = property(lambda s : s.__charts,     _fail_setter)
 
     # yapf: enable
 
@@ -248,10 +251,21 @@ class FinickConfig(object):
         except AttributeError:
             self.__only_maint = False
 
+        # ---------- Process the '-d' command-line option: ----------
+        try:
+            self.__charts = (parsed_args.draw_charts == True)
+        except AttributeError:
+            self.__charts = False
+
         # ---------- Enforce mutual exclusivity of -n and -t: -------
         if len(self.__only_todos_for) > 0 and self.__only_maint:
             raise FinickError(
                 '\'-t\' and \'-n\' are mutually exclusive. Use one or the other -- not both!')
+
+        # ---------- Enforce mutual exclusivity of -n and -d: -------
+        if self.__charts and self.__only_maint:
+            raise FinickError(
+                '\'-d\' and \'-n\' are mutually exclusive. Use one or the other -- not both!')
 
         # ---------- Process the '[commits [commits ...]]' command-line option:
         try:
@@ -263,9 +277,10 @@ class FinickConfig(object):
                     raise FinickError(
                         'Command-line argument for commits requested was turned into an empty list.')
 
-                if self.__only_maint or len(self.__only_todos_for) > 0:
+                if self.__only_maint or self.__charts or len(
+                        self.__only_todos_for) > 0:
                     raise FinickError(
-                        'You cannot use the \'-n\' flag (or \'-t\' flag) while '
+                        'You cannot use the \'-n\' flag (or \'-t\' or \'-d\' flag) while '
                         + 'also providing a list of requested commits (for a '
                         + 'session) at the same time.')
 

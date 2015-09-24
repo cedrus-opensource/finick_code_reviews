@@ -74,8 +74,9 @@ class CalendarBucket(object):
 
 
 class ChartGenerator(object):
-    def __init__(self, finick_config, commits_map):
+    def __init__(self, finick_config, commits_map, list_of_devs):
         self.__finick_config = finick_config
+        self.__all_devs = list_of_devs
         self.__aggregated_commit_lists = commits_map
 
         AssertType_FinickConfig(self.__finick_config)
@@ -142,12 +143,14 @@ class ChartGenerator(object):
         return high_bar
 
     def draw_charts(self):
+        for dev in self.__all_devs:
+            self._draw_charts_one_dev(dev)
+
+    def _draw_charts_one_dev(self, target_developer):
 
         # defer these imports until the last possible moment:
         import numpy
         import matplotlib.pyplot
-
-        target_developer = 'fake@fake.com'
 
         barportion_0 = []  # oops as an author
         barportion_1 = []  # hooray by author
