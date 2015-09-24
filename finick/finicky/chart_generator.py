@@ -115,10 +115,12 @@ class ChartGenerator(object):
 
         matplotlib.pyplot.clf()
         bar_width = 1
+        xlabel_shift = bar_width + 1
 
         bar_anchors = []
         # for labeling along the x axis:
         wlabels = []
+        label_right_anchors = []
 
         # simulate 12 weeks
         for each_week_num in range(0, 12):
@@ -128,6 +130,7 @@ class ChartGenerator(object):
 
             bar_anchors += [(each_week_num + 1) * 5]
             wlabels += [wg.get_week_label()]
+            label_right_anchors += [((each_week_num + 1) * 5) + xlabel_shift]
 
             # height of green portion of the bar:
             green_portion += [wg.get_oopsish_by_author(target_developer)]
@@ -166,13 +169,22 @@ class ChartGenerator(object):
         matplotlib.pyplot.title('Code Reviews by and for ' + target_developer)
 
         # sequence of tick positions, then a sequence of tick labels:
-        matplotlib.pyplot.xticks(bar_anchors, wlabels)
+        matplotlib.pyplot.xticks(label_right_anchors,
+                                 wlabels,
+                                 rotation=60,
+                                 ha='right')
+
+        # gca means to 'get current axes':
+        ax = matplotlib.pyplot.gca()
+        for t in ax.xaxis.get_major_ticks():
+            t.tick1On = False  # a hack-around to hide ticks (while keeping tick labels)
+            t.tick2On = False  # a hack-around to hide ticks (while keeping tick labels)
 
         # sequence of tick positions, then a sequence of tick labels:
         matplotlib.pyplot.yticks(
             [label_position_for_upper_row, label_position_for_lower_row
-             ], [target_developer + ' as reviewer\ncode reading',
-                 target_developer + ' as committer\ncode authoring'])
+             ], [target_developer + ' as reviewer\n(code reading)',
+                 target_developer + ' as committer\n(code authoring)'])
 
         # be careful: it will save right over any preexisting file:
         matplotlib.pyplot.savefig(target_developer + '.png',
