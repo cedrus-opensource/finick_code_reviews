@@ -47,6 +47,11 @@ class CalendarBucket(object):
 
         return self.__datetime_obj.strftime("%Y-%m-%d")
 
+    def get_id_of_outer_enclosing_bucket(self):
+        """When the bucket represents a week, the next outer enclosing bucket is the month.
+        """
+        return self.__datetime_obj.strftime("%Y-%m")
+
     def get_oopsish_by_author(self):
 
         return self._count_filtered_by_types(self.__commits_in_bucket_author,
@@ -171,9 +176,13 @@ class ChartGenerator(object):
 
         matplotlib.pyplot.clf()
         bar_width = 2
+        bar_spacing = 5
         xlabel_shift = bar_width + 1
 
         bar_anchors = []
+        # for vertical lines:
+        vline_anchors = []
+        trailing_line_id = None
         # for labeling along the x axis:
         wlabels = []
         label_right_anchors = []
@@ -186,9 +195,18 @@ class ChartGenerator(object):
                                     target_developer)
 
             bucket_num = len(bar_anchors)
-            bar_anchors += [(bucket_num + 1) * 5]
+            bar_anchors += [(bucket_num + 1) * bar_spacing]
             wlabels += [bucket.get_bucket_label()]
-            label_right_anchors += [((bucket_num + 1) * 5) + xlabel_shift]
+            label_right_anchors += [(
+                (bucket_num + 1) * bar_spacing) + xlabel_shift]
+
+            if (trailing_line_id is not None
+                ) and (trailing_line_id !=
+                           bucket.get_id_of_outer_enclosing_bucket()):
+                vline_anchors += [bar_anchors[len(bar_anchors) - 1] -
+                                  (bar_spacing / 2)]
+
+            trailing_line_id = bucket.get_id_of_outer_enclosing_bucket()
 
             # height of portion 0 of the bar:
             barportion_0 += [bucket.get_oopsish_by_author() *
@@ -242,6 +260,12 @@ class ChartGenerator(object):
         for t in ax.xaxis.get_major_ticks():
             t.tick1On = False  # a hack-around to hide ticks (while keeping tick labels)
             t.tick2On = False  # a hack-around to hide ticks (while keeping tick labels)
+
+        for xspot in vline_anchors:
+            matplotlib.pyplot.axvline(x=xspot,
+                                      color='gray',
+                                      linewidth=0.5,
+                                      linestyle=':')
 
         # sequence of tick positions, then a sequence of tick labels:
         matplotlib.pyplot.yticks(
