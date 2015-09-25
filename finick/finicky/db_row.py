@@ -117,6 +117,7 @@ class DbRow(object):
 
     prior_monday = property(   _get_monday,            _fail_setter)
 
+    """Note: user-code could still (inappropriately) modify ITEMS in todo_refs list. Please do not."""
     todo_refs    = property(lambda s : s.__todo_refs,  _fail_setter)
 
     committer    = property(lambda s : s.__committer,  _fail_setter)
