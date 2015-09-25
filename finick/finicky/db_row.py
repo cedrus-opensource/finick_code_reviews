@@ -132,6 +132,9 @@ class DbRow(object):
 
     # yapf: enable
 
+    def row_was_machine_created(self):
+        return self.__rowtype == self.TYPE_HIDE or self.__rowtype == self.TYPE_RVRT
+
     def _convert_rowtype_constant_to_string(self, rowtype_int):
         if rowtype_int == self.TYPE_OK:
             return 'OK'

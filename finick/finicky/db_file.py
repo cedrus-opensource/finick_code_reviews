@@ -95,7 +95,7 @@ Eventually we will likely need month-by-month and other variations.
 
         for r in self.__rows:
             # exclude commits that are 'machine-made' (done by finick):
-            if r.row_type != r.TYPE_HIDE and r.row_type != r.TYPE_RVRT:
+            if not r.row_was_machine_created():
                 map_key = r.prior_monday
                 if not map_key in results:
                     results[map_key] = []
