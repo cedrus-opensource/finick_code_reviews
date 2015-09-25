@@ -132,6 +132,9 @@ class DbRow(object):
 
     # yapf: enable
 
+    def rowtype_merits_reminder(self):
+        return self.__rowtype == self.TYPE_TODO or self.__rowtype == self.TYPE_PLS
+
     def row_was_machine_created(self):
         return self.__rowtype == self.TYPE_HIDE or self.__rowtype == self.TYPE_RVRT
 
@@ -246,7 +249,7 @@ class DbRow(object):
         """This code is in a function (instead of coded in place) because we need it twice:
         we use it during the 'normal' merge, and also during the special-case logic for OOPS rows.
         """
-        if not (ar.row_type == ar.TYPE_TODO or ar.row_type == ar.TYPE_PLS):
+        if not ar.rowtype_merits_reminder():
             raise FinickError(
                 'Function misuse. Only call into here with a row of type TODO or PLS.')
 
@@ -340,7 +343,7 @@ class DbRow(object):
             self.__reviewer = incoming_reviewer
             self.__action_comment = ar.comment
 
-        elif ar.row_type == ar.TYPE_TODO or ar.row_type == ar.TYPE_PLS:
+        elif ar.rowtype_merits_reminder():
             self._merge_TODO_private_helper(ar, incoming_reviewer)
 
         elif ar.row_type == ar.TYPE_OOPS:

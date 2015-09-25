@@ -126,7 +126,7 @@ Eventually we will likely need month-by-month and other variations.
         cancelled_hashes = []
 
         for r in self.__rows:
-            if r.row_type == r.TYPE_TODO or r.row_type == r.TYPE_PLS:
+            if r.rowtype_merits_reminder():
                 for_me = r.committer == email_of_debtor
                 if for_me:
                     rough_results.append(copy.deepcopy(r))
