@@ -124,6 +124,7 @@ Eventually we will likely need month-by-month and other variations.
         # find rows of those types where the *committer* is the same as current session driver
         rough_results = []
         cancelled_hashes = []
+        suppression_candidates = []
 
         for r in self.__rows:
             if r.rowtype_merits_reminder():
@@ -135,12 +136,28 @@ Eventually we will likely need month-by-month and other variations.
                 # each todo ref should be length SHORT_H_SIZE
                 cancelled_hashes += r.todo_refs
 
+            elif len(r.hopefix_commastring) > 0:
+                # hopefix comments indicate a proposed FIXD is already committed.
+                # (earlier parsing code also already should have checked that
+                # the proposed fix is AWAITING REVIEW. if a proposed fix was
+                # reviewed but rejected, then it will _not_ appear in hopefix_commastring)
+                hashes = r.hopefix_commastring.split(',')
+                for h in hashes:
+                    if len(h) > 0:
+                        suppression_candidates.append(h)
+
         results = []
 
         for r in rough_results:
             # we expect the todo refs to always be length SHORT_H_SIZE
             if r.commithash[0:r.SHORT_H_SIZE] not in cancelled_hashes:
                 results.append(r)
+                # add an attribute:
+                r.has_pending_hopefix = False
+                # uh-oh. nested for loops! yikes! the excuse (for now): we expect sc to be a SHORT list:
+                for sc in suppression_candidates:
+                    if r.commithash.lower().startswith(sc.lower()):
+                        r.has_pending_hopefix = True
 
         return results
 

@@ -29,8 +29,10 @@ jdoe@cedrus.com            eb1a79c83e90425e787c3f141c396abf8371a822   2015-04-07
 xxxxx@cedrus.com           5d9cc875a79a0046c3a395cd6afda3046067da2d   2015-04-07_14:05:54   TODO   five@me                    # sdk alg gjasjgie x0949 gs j3 23jt
 jdoe@cedrus.com            616316ac33a2d0bdf9650e2dd46ea472b2ba963a   2015-04-07_14:15:54   WAIT
 jdoe@cedrus.com            d73e5c26d706f25370bf7593415958fa6d46626e   2015-04-07_14:32:37   PLS    o@o.om                     # won't you please
+; (note about 'hopeful FIXD': the tag about the hopeful fix can be anywhere in the comment) hope-FIXD:d73e5c2 (<--- even the middle, like here)
 jdoe@cedrus.com            058d7d3f119541958de8da441a58f305b1911c66   2015-04-07_15:13:19   WAIT
 jdoe@cedrus.com            21aa7ba25215434d92f1726ab0e67b3df6abd182   2015-04-07_18:07:40   PLS    x@x.com                    # dkgjsdgk
+; humbly submitting the commit a1e58b1810 as a proposed FIXD. machine-readable tag for that: hope-FIXD:63a4530,bd39d46211
 jdoe@cedrus.com            a1e58b1810bdb7e81e9a750079322402e39e9f58   2015-04-08_11:18:41   WAIT
 jdoe@cedrus.com            b61cf11528d5794c13b9c6072546c35719ded3e4   2015-04-08_16:36:53   WAIT
 jdoe@cedrus.com            47a08a8322f3b98fbfbf9dc609d58a0017593072   2015-04-08_16:21:52   FIXD   app@roval.me               2228c3d018,21aa7ba252, # good fix for todo

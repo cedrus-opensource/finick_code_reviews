@@ -6,6 +6,7 @@ from __future__ import absolute_import
 from finicky.error import FinickError
 
 import datetime
+import re  # for this problem, I'll use regular expressions! Now I have two problems. :)
 
 
 def AssertType_DbRow(o):
@@ -107,28 +108,36 @@ class DbRow(object):
             self.__creator = 'create_from_string'
             self._initialize_from_string(string_to_parse)
 
+        self.__hopeful_fixd_refs = ''  # either empty or else a comma-string: aa,bds,ejjx,ddd
+        if len(self.__file_comment) > 0:
+            # Note: do not parse hope-fixd tags until AFTER we know our __rowtype
+            self._parse_hopefixds(self.__file_comment)
+
+
     # yapf: disable
 
-    row_type     = property(lambda s : s.__rowtype,    _fail_setter)
+    row_type     = property(lambda s : s.__rowtype,                  _fail_setter)
 
-    rtype_str    = property(   _get_my_string,         _fail_setter)
+    rtype_str    = property(   _get_my_string,                       _fail_setter)
 
-    commitdate   = property(   _get_dateobj,           _fail_setter)
+    commitdate   = property(   _get_dateobj,                         _fail_setter)
 
-    prior_monday = property(   _get_monday,            _fail_setter)
+    prior_monday = property(   _get_monday,                          _fail_setter)
 
     """Note: user-code could still (inappropriately) modify ITEMS in todo_refs list. Please do not."""
-    todo_refs    = property(lambda s : s.__todo_refs,  _fail_setter)
+    todo_refs    = property(lambda s : s.__todo_refs,                _fail_setter)
 
-    committer    = property(lambda s : s.__committer,  _fail_setter)
+    committer    = property(lambda s : s.__committer,                _fail_setter)
 
-    commithash   = property(lambda s : s.__commit_hash,_fail_setter)
+    commithash   = property(lambda s : s.__commit_hash,              _fail_setter)
 
-    reviewer     = property(lambda s : s.__reviewer,   _fail_setter)
+    reviewer     = property(lambda s : s.__reviewer,                 _fail_setter)
 
-    cleancomment = property(   _get_cleancomment,      _fail_setter)
+    cleancomment = property(   _get_cleancomment,                    _fail_setter)
 
-    comment      = property(lambda s : s.__action_comment, _fail_setter)
+    comment      = property(lambda s : s.__action_comment,           _fail_setter)
+
+    hopefix_commastring = property(lambda s : s.__hopeful_fixd_refs, _fail_setter)
 
     # yapf: enable
 
@@ -137,6 +146,17 @@ class DbRow(object):
 
     def row_was_machine_created(self):
         return self.__rowtype == self.TYPE_HIDE or self.__rowtype == self.TYPE_RVRT
+
+    def was_reviewed_already(self):
+        return (self.__rowtype == self.TYPE_OK or
+                self.__rowtype == self.TYPE_OOPS or
+                self.__rowtype == self.TYPE_FIXD or
+                self.__rowtype == self.TYPE_TODO or
+                self.__rowtype == self.TYPE_PLS)
+
+    def still_needs_review(self):
+        return (self.__rowtype == self.TYPE_WAIT or
+                self.__rowtype == self.TYPE_NOW)
 
     def _convert_rowtype_constant_to_string(self, rowtype_int):
         if rowtype_int == self.TYPE_OK:
@@ -488,6 +508,99 @@ class DbRow(object):
             if False == self.__action_comment.startswith(
                 self.ACTION_COMMENT_CHAR):
                 self.__action_comment = self.ACTION_COMMENT_CHAR + ' ' + self.__action_comment
+
+    def _parse_hopefixds(self, file_comment_str):
+        if self.__rowtype == self.TYPE_ERRORTYPE:
+            raise FinickError(
+                'Logic bug. We require a row type by this point.')
+
+        sanity_check_re = re.compile('hope.?FIXD', re.IGNORECASE)
+        # because of parens in the next regex, the results we retrieve is ONLY the commithash after the colon:
+        regex = re.compile('\\bhope.?FIXD:([\\w]+)\\b', re.IGNORECASE)
+
+        # leave this test 'alive' in here. if anyone ventures to edit the expressions above, this must still pass:
+        self._test_the_regexp(regex)
+
+        possible_tags = sanity_check_re.findall(file_comment_str)
+        actual_tags = regex.findall(file_comment_str)
+
+        # if it looks like someone TRIED to use a hope-FIXD tag but didn't quite match the syntax, be helpful:
+        if len(possible_tags) > len(actual_tags):
+            print(
+                'Warning: a file comment seems to contain a mal-formed hope-FIXD tag. Comment line follows:')
+            print(file_comment_str)
+
+        if len(actual_tags) > 0:
+
+            for at in actual_tags:
+                if len(at) < 5:
+                    errstr = 'You must use longer commit hashes in your hope-FIXD tag. \'' + at + '\' is too short. Offending line:\n'
+                    errstr += file_comment_str
+                    raise FinickError(errstr)
+
+            tag_still_has_meaning = True
+            """
+            A note about why we compute the bool 'tag_still_has_meaning':
+
+            We only want to process hope-FIXD tags if they are marking
+            commits that have NOT YET BEEN REVIEWED.
+
+            This all makes perfect sense if you consider how hope-FIXD
+            tags are being used in finick_code_reviews. These tags are
+            used to TEMPORARILY suppress reminders. Someone who got a TODO
+            and then committed a candidate fix for the TODO can put a
+            hope-FIXD tag in the db_file to suppress being reminded about
+            that particular TODO *until* a reviewer gets around to
+            reviewing the candidate FIXD.
+
+            Once the proposed FIXD has been reviewed, then if it was
+            indeed marked (approved) 'FIXD' by the reviewer, then it would
+            automatically disappear from todo reminders.  But (important!)
+            if the reviewer did _NOT_ deem it a FIXD, but instead thought
+            the proposed FIXD was an OOPS or something else, then at that
+            point the original author MUST BE SHOWN the original reminder
+            again, because their proposed FIXD did not actually fix
+            things, so we must display a reminder to try again. The
+            *temporary* suppression must end then.
+            """
+
+            if self.__rowtype == self.TYPE_OK:
+                tag_still_has_meaning = False
+                errstr = 'Warning: A row was marked OK when it was proposed as a FIXD. Either edit to make a FIXD or remove comment line:\n'
+                errstr += file_comment_str
+                print(errstr)
+                # Why a warning here and not an error?
+                # Answer: although it's a long shot, some reviewer COULD think that
+                # a proposed hope-FIXD is a completely 'TYPE_OK' change that should
+                # make it into the mainline, but that it is STILL NOT A PROPER 'FIXD'
+                # for whatever the original TODO/PLS request wanted.
+
+            if self.row_was_machine_created():
+                errstr = 'There is a hope-FIXD comment on a machine-committed row. That makes no sense. Remove (or move) the comment line:\n'
+                errstr += file_comment_str
+                raise FinickError(errstr)
+
+            if self.was_reviewed_already():
+                # this row is already reviewed, so a 'proposal' to mark it FIXD is obsolete
+                tag_still_has_meaning = False
+
+            if tag_still_has_meaning:
+                if not self.still_needs_review():
+                    errstr = 'Logic bug. Finick thinks there is a meaningful hope-FIXD on a row not of type WAIT or NOW. Tagged comment:\n'
+                    errstr += file_comment_str
+                    raise File_comment_str(errstr)
+
+                # finally do what we came here to do:
+                self.__hopeful_fixd_refs = ','.join(actual_tags)
+
+    def _test_the_regexp(self, re_to_test):
+        test_debug = re_to_test.findall(
+            'a thing hopefixd:aa hope-fixd:b but HOPEFIXD: and more hope-FIXD:ccc,hope-FIXD:xxx')
+        if not (len(test_debug) == 4 and test_debug[0] == 'aa' and
+                    test_debug[1] == 'b' and test_debug[2] == 'ccc' and
+                    test_debug[3] == 'xxx'):
+            raise FinickError(
+                'Regular expression for hope-FIXD comments is malfunctioning. Requires developer attention.')
 
     def set_forefront_marker(self, forefront_marker_string):
         if self.__forefront_string != '':

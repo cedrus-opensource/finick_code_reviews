@@ -39,22 +39,40 @@ class RowPrinterForSessionStart(object):
         else:
             t_list = []
             p_list = []
+            t_list_hf = []  # 'hf' means there is a 'hopeful FIXD' awaiting review
+            p_list_hf = []  # 'hf' means there is a 'hopeful FIXD' awaiting review
 
             # in the RowPrinterForSessionStart ctor, we asserted AssertType_DbRow on all in __todoslist
             for i in self.__todoslist:
+                is_hopefix = False
+                try:
+                    if True == i.has_pending_hopefix:
+                        is_hopefix = True
+                except AttributeError:
+                    raise FinickError(
+                        'Code assumption violated. Something should have put a has_pending_hopefix attribute on this row by now.')
+
                 if i.row_type == i.TYPE_TODO:
-                    t_list.append(i)
+                    if is_hopefix:
+                        t_list_hf.append(i)
+                    else:
+                        t_list.append(i)
                 elif i.row_type == i.TYPE_PLS:
-                    p_list.append(i)
+                    if is_hopefix:
+                        p_list_hf.append(i)
+                    else:
+                        p_list.append(i)
                 else:
                     raise FinickError(
                         'Unknown row type in list of reminders. Expected only TODO or PLS.')
 
+            hf_tag_str = '[hope-fixed]'
             o = ''
             # using a 'contrived' if-test so that the 'print's all line up
             if True:
                 o += '\n\n'
                 o += '    ---- Your Friendly Reminders: ----\n\n'
+                o += '        (Note: \'' + hf_tag_str + '\' means a proposed fix has already been committed, but awaits review.)\n\n'
 
             if len(t_list) > 0:
                 o += '    Must Fix:\n\n'
@@ -62,12 +80,18 @@ class RowPrinterForSessionStart(object):
             for t in t_list:
                 o += '      commit ' + t.commithash + ', ' + t.comment + '\n'
 
+            for t in t_list_hf:
+                o += '      ' + hf_tag_str + ' commit ' + t.commithash + ', ' + t.comment + '\n'
+
             if len(t_list) > 0:
                 o += '\n'
                 o += '    Requested kindly:\n\n'
 
             for p in p_list:
                 o += '      commit ' + p.commithash + ', ' + p.comment + '\n'
+
+            for p in p_list_hf:
+                o += '      ' + hf_tag_str + ' commit ' + p.commithash + ', ' + p.comment + '\n'
 
             # using a 'contrived' if-test so that the 'print's all line up
             if True:
