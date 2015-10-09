@@ -8,6 +8,10 @@ DbTextFile::purge_older_reviewed_commits is not implemented yet.
 finick/forefront.py is not implemented yet.
 
 
+[core feature-set] need a set of various different 'assignment strategies' (currently you are just assigned all WAIT items you did not author)
+
+[core feature-set] provide the *option* to apply a filter to exclude commits from review. (one exclusion rule that some would want -- and others not want -- is to never review a commit that changed ONLY BINARY files)
+
 
 [for main ini file] specify a string as the 'tag' in email subject-lines.
 
