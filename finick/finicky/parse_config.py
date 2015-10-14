@@ -32,7 +32,9 @@ class FinickConfig(object):
         self.__config = ''
         self.__cfgdir = ''
         self.__branch = ''
+        self.__dbbranch = ''
         self.__repopath = ''
+        self.__dbrepopath = ''
         self.__purgeweeks = -1
         self.__ourepochstart = 0
         self.__str_start = ''
@@ -103,11 +105,15 @@ class FinickConfig(object):
 
     branch     = property(lambda s : s.__branch,        _fail_setter)
 
+    db_branch  = property(lambda s : s.__dbbranch,      _fail_setter)
+
     configname = property(lambda s : s.__config,        _fail_setter)
 
     confdir    = property(lambda s : s.__cfgdir,        _fail_setter)
 
     repopath   = property(lambda s : s.__repopath,      _fail_setter)
+
+    db_repopath= property(lambda s : s.__dbrepopath,    _fail_setter)
 
     purgeweeks = property(lambda s : s.__purgeweeks,    _fail_setter)
 
@@ -189,6 +195,35 @@ class FinickConfig(object):
         location = os.path.dirname(file_location)
         self.__cfgdir = os.path.normpath(location)
         self.__verbose = int(cf.get('GitReviews', 'Verbosity'))
+
+        try:
+            self.__dbrepopath = cf.get('GitReviews', 'DbRepoPath')
+            # do not call normpath til we KNOW it wasn't a NoOptionError.
+            # (otherwise, normpath can turn an empty string into a nonempty one,
+            #  which thwarts our check for empty string later)
+            self.__dbrepopath = os.path.normpath(self.__dbrepopath)
+        except configparser.NoOptionError:
+            self.__dbrepopath = ''
+
+        try:
+            self.__dbbranch = cf.get('GitReviews', 'DbRepoBranch')
+        except configparser.NoOptionError:
+            self.__dbbranch = ''
+
+        both_empty = self.__dbrepopath == '' and self.__dbbranch == ''
+        both_full = self.__dbrepopath != '' and self.__dbbranch != ''
+
+        if not (both_empty or both_full):
+            raise FinickError('Either DbRepoPath and DbRepoBranch must both ' +
+                              'be ABSENT from the ini file, or else they must '
+                              + 'both be present.')
+
+        # if DbRepoPath is not given, we use same path as RepoPath:
+        if self.__dbrepopath == '':
+            self.__dbrepopath = self.__repopath
+            self.__dbbranch = self.__branch
+        else:
+            self.__dbrepopath = os.path.normpath(self.__dbrepopath)
 
     def _read_userfile_settings(self):
 

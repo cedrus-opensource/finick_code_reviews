@@ -351,7 +351,8 @@ class DbTextFile(object):
             print(expected_db, 'not found')
         else:
             is_committed = finicky.gitting.git_repo_contains_committed_file(
-                finick_config, os.path.abspath(expected_db))
+                finick_config, finick_config.db_repopath,
+                os.path.abspath(expected_db))
             if filename_w_fullpath == finick_config.get_assign_file_fullname_fullpath(
             ):
                 # the assignment file should be git-ignored. not committed:

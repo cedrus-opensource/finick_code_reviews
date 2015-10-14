@@ -39,20 +39,35 @@ def _dec_assign_to_globals(F):
 
 
 def _git_establish_session_readiness(finick_config, is_session_starting):
+    success1 = _git_establish_session_readiness_impl(
+        finick_config, is_session_starting, finick_config.repopath,
+        finick_config.branch)
+
+    success2 = True
+
+    if (finick_config.repopath != finick_config.db_repopath) or (
+            finick_config.branch != finick_config.db_branch):
+        success2 = _git_establish_session_readiness_impl(
+            finick_config, is_session_starting, finick_config.db_repopath,
+            finick_config.db_branch)
+
+    return success1 and success2
+
+
+def _git_establish_session_readiness_impl(finick_config, is_session_starting,
+                                          path, branch):
 
     AssertType_FinickConfig(finick_config)
 
     _git_current_user_email(finick_config)
 
-    _git_exec_and_return_stdout(
-        'git checkout ' + _quietness + finick_config.branch,
-        finick_config.repopath)
+    _git_exec_and_return_stdout('git checkout ' + _quietness + branch, path)
 
     # the next command needs git 1.6.3 or newer, per http://stackoverflow.com/questions/1417957/show-just-the-current-branch-in-git
     results = _git_exec_and_return_stdout('git rev-parse --abbrev-ref HEAD',
-                                          finick_config.repopath)
+                                          path)
 
-    if results.rstrip() != finick_config.branch:
+    if results.rstrip() != branch:
         raise FinickError(
             "Unable to start code-review session. Could not check out the required git branch.")
 
@@ -72,8 +87,7 @@ def _git_establish_session_readiness(finick_config, is_session_starting):
            the merge result.
            """
         _git_exec_and_return_stdout(
-            'git pull ' + _quietness + ' origin ' + finick_config.branch,
-            finick_config.repopath)
+            'git pull ' + _quietness + ' origin ' + branch, path)
 
     # if we are starting one session, there must not be any other session in progress (even from other INI file)
     # check for a currently-open, in-progress review session.
@@ -97,14 +111,15 @@ def git_establish_session_readiness_start(finick_config):
 
 
 @_dec_assign_to_globals
-def git_repo_contains_committed_file(finick_config, which_file):
+def git_repo_contains_committed_file(finick_config, which_repopath,
+                                     which_file):
 
     AssertType_FinickConfig(finick_config)
 
     # log has this {--ignore-submodules[=<when>]}, but it only matters for showing patches? (diffs)
     # this can be a false positive if the file is on disk, but has been deleted from the repo
     results = _git_exec_and_return_stdout('git log -1 --oneline ' + which_file,
-                                          finick_config.repopath)
+                                          which_repopath)
 
     problem_01 = 0 == len(results)
 
@@ -112,7 +127,7 @@ def git_repo_contains_committed_file(finick_config, which_file):
     # this returns an empty string even if we got a false positive earlier.
     # (we don't use ls-files alone, because it gives a false positive if you staged a file but never committed it)
     results = _git_exec_and_return_stdout('git ls-files ' + which_file,
-                                          finick_config.repopath)
+                                          which_repopath)
 
     problem_02 = 0 == len(results)
 
@@ -329,18 +344,17 @@ def _git_current_user_email(finick_config):
     finick_config.reviewer = results
 
 
-def _git_push(finick_config):
+def _git_push(path, branch):
     _git_exec_and_return_stdout(
-        'git push ' + _quietness + ' origin ' + finick_config.branch,
-        finick_config.repopath)
+        'git push ' + _quietness + ' origin ' + branch, path)
 
 
-def _git_commit_and_push(finick_config, commit_note1, commit_note2):
+def _git_commit_and_push(path, branch, commit_note1, commit_note2):
     _git_exec_and_return_stdout(
         'git commit -m \"' + commit_note1 + '\" -m \"' + commit_note2 + '\"',
-        finick_config.repopath)
+        path)
 
-    _git_push(finick_config)
+    _git_push(path, branch)
 
 
 def _git_stage_the_edited_db(finick_config):
@@ -369,7 +383,7 @@ def git_perform_maintenance_commit(finick_config):
     # when that happens, the git commit will fail.
     try:
         _git_exec_and_return_stdout('git commit -m \"' + commit_note + '\"',
-                                    finick_config.repopath)
+                                    finick_config.db_repopath)
 
         c_success = True
     except FinickError:
@@ -377,7 +391,7 @@ def git_perform_maintenance_commit(finick_config):
             'Warning: unable to complete a maintenance commit. There may have simply been no changes to the db file.')
 
     if c_success:
-        _git_push(finick_config)
+        _git_push(finick_config.db_repopath, finick_config.db_branch)
 
 
 @_dec_assign_to_globals
@@ -392,7 +406,8 @@ def git_perform_sessionstart_commit(finick_config):
     # the git add succeeds even if 'the_db' had no changes to be staged.
     # when that happens, the git commit will fail.
     # THAT SHOULD NOT HAPPEN HERE. we only start a session if there WERE new assignments.
-    _git_commit_and_push(finick_config, commit_note1, commit_note2)
+    _git_commit_and_push(finick_config.db_repopath, finick_config.db_branch,
+                         commit_note1, commit_note2)
 
 
 @_dec_assign_to_globals
@@ -408,7 +423,8 @@ def git_perform_session_completion_commit(finick_config, work_count):
     # the git add succeeds even if 'the_db' had no changes to be staged.
     # when that happens, the git commit will fail.
     # THAT SHOULD NOT HAPPEN HERE. we only start a session if there WERE new assignments.
-    _git_commit_and_push(finick_config, commit_note1, commit_note2)
+    _git_commit_and_push(finick_config.db_repopath, finick_config.db_branch,
+                         commit_note1, commit_note2)
 
 
 @_dec_assign_to_globals
@@ -423,7 +439,8 @@ def git_perform_session_abort_commit(finick_config):
     # the git add succeeds even if 'the_db' had no changes to be staged.
     # when that happens, the git commit will fail.
     # THAT SHOULD NOT HAPPEN HERE. we only start a session if there WERE new assignments.
-    _git_commit_and_push(finick_config, commit_note1, commit_note2)
+    _git_commit_and_push(finick_config.db_repopath, finick_config.db_branch,
+                         commit_note1, commit_note2)
 
 
 @_dec_assign_to_globals
