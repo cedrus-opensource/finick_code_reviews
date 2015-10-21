@@ -12,6 +12,8 @@ finick/forefront.py is not implemented yet.
 
 [core feature-set] provide the *option* to apply a filter to exclude commits from review. (one exclusion rule that some would want -- and others not want -- is to never review a commit that changed ONLY BINARY files)
 
+[alternative file store mechanism] look into git notes http://stackoverflow.com/a/6799031
+
 
 [for main ini file] specify a string as the 'tag' in email subject-lines.
 
