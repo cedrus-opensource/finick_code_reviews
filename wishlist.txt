@@ -12,6 +12,10 @@ finick/forefront.py is not implemented yet.
 
 [core feature-set] provide the *option* to apply a filter to exclude commits from review. (one exclusion rule that some would want -- and others not want -- is to never review a commit that changed ONLY BINARY files)
 
+[core feature-set] see about how to (maybe) succeed even when the git-bash behavior does this prompt:
+$ git pull
+Enter passphrase for key '/c/Users/somebody/.ssh/id_rsa':
+
 [alternative file store mechanism] look into git notes http://stackoverflow.com/a/6799031
 
 
